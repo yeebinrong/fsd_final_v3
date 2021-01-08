@@ -8,6 +8,13 @@ const secure = require('secure-env')
 const morgan = require('morgan')
 const cors = require('cors')
 
+const jwt = require('jsonwebtoken')
+
+// Passport core
+const passport = require('passport')
+// Passport Strategies
+const LocalStrategy = require('passport-local').Strategy
+
 const { MongoClient} = require('mongodb')
 const AWS = require('aws-sdk')
 const multer = require('multer')
@@ -37,10 +44,10 @@ const MONGO_USER = global.env.MONGO_USER
 const MONGO_PASS = global.env.MONGO_PASS
 const MONGO_DB = global.env.MONGO_DB
 const MONGO_COLLECTION = global.env.MONGO_COLLECTION
-const MONGO_URL = global.env.MONGO_URL
+const MONGO_COLLECTION2 = global.env.MONGO_COLLECTION2
+// const MONGO_URL = global.env.MONGO_URL
 // const MONGO_URL = 'mongodb://localhost:27017'
-// const MONGO_URL = `mongodb+srv://${MONGO_USER}:${MONGO_PASS}>@cluster0.r2tvd.mongodb.net/${MONGO_DB}>?retryWrites=true&w=majority`
-
+const MONGO_URL = `mongodb://${MONGO_USER}:${MONGO_PASS}@localhost:27017/${MONGO_DB}`
 // MONGO CONFIUGRAIONS
 const mongo = new MongoClient(MONGO_URL, {
         useNewUrlParser: true, useUnifiedTopology: true
@@ -57,6 +64,38 @@ const s3 = new AWS.S3({
     accessKeyId: global.env.DIGITALOCEAN_ACCESS_KEY,
     secretAccessKey: global.env.DIGITALOCEAN_SECRET_ACCESS_KEY
 })
+
+
+// Configure passport with a strategy
+passport.use(new LocalStrategy(
+    {
+        usernameField: 'username',
+        passwordField: 'password',
+        passReqToCallback: true
+    },
+    async (req, username, password, done) => {
+        try {
+            // perform the authentication
+            const data = (await QUERY_SELECT_USER_PASS_WITH_USER([username, password]))
+            if (data.length > 0) {
+                done(null,
+                    // info about the user
+                    {
+                        username: username,
+                        loginTime: (new Date().toString()),
+                        security: 2
+                    }
+                )
+            } else {
+                // Incorrect login
+                done('Incorrect username and/or password', false)
+            }
+        } catch (e) {
+            done(`Error authenticating: ${e}`, false)
+        }
+    }
+))
+
 
 // Declare the port to run server on
 const PORT = parseInt(process.argv[2]) || parseInt(process.env.PORT) || 3000
@@ -173,31 +212,54 @@ app.use(express.json())
 // Apply cors headers to resp
 app.use(cors())
 
-// // POST /upload
-// app.post('/api/upload', upload.single('file'), async (req, resp) => {
-//     // Parse the json string sent from client into json object
-//     const data = JSON.parse(req.body.data)
-//     console.info(req.file)
-//     console.info(data)
-//     try {
-//         // const buffer = await myReadFile(req.file.path)
-//         // const key = await uploadToS3(buffer, req)
-//         resp.status(200)
-//         resp.type('application/json')
-//         // resp.json({key:key})
-//         resp.json({key:"test"})
-//     } catch (e) {
-//         console.info("Error in /upload : ", e)
-//         resp.status(404)
-//         resp.type('application/json')
-//         resp.json({})
-//     }
-// })
+// POST /api/login
+app.post('/api/login', (req, resp) => {
+    console.info(req.body.username)
+    console.info(req.body.password)
+    // Validate credentials
+    if (req.body.username == "a") {
+        resp.status(200)
+        resp.type('application/json')
+        resp.json({token: "testing token", message: ""},)            
+    }
+    resp.status(401)
+    resp.type('application/json')
+    resp.json({token: "testing token", message: "Please check your username/password."},)
+})
 
-// // Redirect back to landingpage
-// app.use('*', (req, resp) => {
-//     resp.redirect('http://localhost:4200/error')
-// })
+app.post('/api/register', (req, resp) => {
+    // check if username already exists
+    // insert into mongodb if not exists
+    // return success or fail
+})
+
+// POST /api/upload
+app.post('/api/upload', upload.single('file'), async (req, resp) => {
+    // Parse the json string sent from client into json object
+    const data = JSON.parse(req.body.data)
+    console.info(req.file)
+    console.info(data)
+    try {
+        // const buffer = await myReadFile(req.file.path)
+        // const key = await uploadToS3(buffer, req)
+        resp.status(200)
+        resp.type('application/json')
+        // resp.json({key:key})
+        resp.json({key:"test"})
+    } catch (e) {
+        console.info("Error in /upload : ", e)
+        resp.status(404)
+        resp.type('application/json')
+        resp.json({})
+    }
+})
+
+// Resource not found
+app.use('*', (req, resp) => {
+    resp.status(404)
+    resp.type('application/json')
+    resp.json({message:"Resource not found."})
+})
 
 //#endregion
 

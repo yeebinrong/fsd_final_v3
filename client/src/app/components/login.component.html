@@ -1,0 +1,33 @@
+<div fxFill fxLayout="column">
+    <div fxFlex fxLayout="row" class="m-1" fxLayoutAlign="center stretch">
+        <mat-card fxFlex="70" fxLayout="column" class="mb-1">
+            <div class="m-1" fxLayout="row" fxLayoutAlign="center center">
+                <h1>Please Login 
+                        <em>or</em>
+                    <span><button [routerLink]="['/register']" class="ml-1 mr-1" color="primary" mat-raised-button>Create an Account</button></span>
+                        <em>or</em>
+                    <span><button [routerLink]="['/forgot']" class="ml-1" color="warn" mat-raised-button>Forgot password</button></span>
+                </h1>
+            </div>
+            <form [formGroup]="form" fxLayout="column">
+                <mat-form-field appearance="outline"> <!-- Username Input -->
+                    <mat-label>Username</mat-label>
+                    <input type="text" matInput formControlName="username" placeholder="Your username.">
+                    <mat-error>Please enter your username.</mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline"> <!-- Password Input -->
+                    <mat-label>Password</mat-label>
+                    <input [type]="hide ? 'password' : 'text'" matInput formControlName="password" placeholder="Your password." autocomplete="off">
+                    <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
+                        <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+                    </button>
+                    <mat-error>Please enter your password.</mat-error>
+                </mat-form-field>
+                <p class="error"><em>{{errorMessage}}</em></p>
+                <button type="button" (click)="onSubmit()" mat-raised-button color="accent" 
+                    [disabled]="form.invalid">Login<i class="ml-05 fas fa-door-open"></i>
+                </button>
+            </form>
+        </mat-card>
+    </div>
+</div>

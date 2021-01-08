@@ -1,0 +1,9 @@
+<div fxLayout="column" fxFill>
+  <mat-toolbar fxFlex="8" color="primary" fxLayout="row">
+    My app
+    <span class="spacer"></span>
+    <button *ngIf="isLogin" type="button" mat-raised-button (click)="logout()">Logout</button>
+  </mat-toolbar>
+  <!-- Add router outlet for routes -->
+  <router-outlet></router-outlet>
+</div>
