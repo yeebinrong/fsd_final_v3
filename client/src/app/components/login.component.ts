@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { UserPass } from '../model';
 import { AuthGuardService } from '../services/authguard.service';
 
 @Component({
@@ -13,6 +14,7 @@ export class LoginComponent implements OnInit {
   form:FormGroup
   hide:boolean = true // hide password
   errorMessage = ''
+  sha1 = require('sha1');
 
   constructor(private fb:FormBuilder, private router:Router, private authSvc:AuthGuardService) { }
 
@@ -22,16 +24,12 @@ export class LoginComponent implements OnInit {
 
   // Handles the form when submit button is clicked
   async onSubmit() {
-    // try {
-    //   this.errorMessage = ''
-    //   await this.apiSvc.apiLogin(this.form.value)
-    //   this.router.navigate(['/main'])
-    // } catch (e) {
-    //   this.errorMessage = e.error.msg;
-    //   console.log("Authentication error:", e.error.msg)
-    // }
+    const credentials: UserPass = {
+      username: this.form.get('username').value,
+      password: this.sha1(this.form.get('password').value),
+    }
     this.errorMessage = ''
-    this.authSvc.login(this.form.value)
+    this.authSvc.login(credentials)
     .then (msg => {
       this.errorMessage = msg
     })

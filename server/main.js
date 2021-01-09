@@ -13,12 +13,21 @@ const jwt = require('jsonwebtoken')
 // Passport core
 const passport = require('passport')
 // Passport Strategies
-const LocalStrategy = require('passport-local').Strategy
+const { localStrategy, mkAuth } = require('./passport_strategy.js')
+const sha256 = require('sha256')
 
 const { MongoClient} = require('mongodb')
 const AWS = require('aws-sdk')
 const multer = require('multer')
 const fs = require('fs')
+
+const { 
+    MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, 
+    AWS_ENDPOINT, s3 
+} = require('./server_config.js')
+
+const { myReadFile, uploadToS3, unlinkAllFiles, insertCredentialsMongo, checkExistsMongo, checkCredentialsMongo } = require('./db_utils.js')
+const { } = require('./helper.js')
 
 //#endregion
 
@@ -35,67 +44,10 @@ const fs = require('fs')
 /* -------------------------------------------------------------------------- */
 //#region
 
-// Retrieve environment variables from .env
-global.env = secure({secret: process.env.ENV_PASSWORD})
-
-
-//######## MONGO ########
-const MONGO_USER = global.env.MONGO_USER
-const MONGO_PASS = global.env.MONGO_PASS
-const MONGO_DB = global.env.MONGO_DB
-const MONGO_COLLECTION = global.env.MONGO_COLLECTION
-const MONGO_COLLECTION2 = global.env.MONGO_COLLECTION2
-// const MONGO_URL = global.env.MONGO_URL
-// const MONGO_URL = 'mongodb://localhost:27017'
-const MONGO_URL = `mongodb://${MONGO_USER}:${MONGO_PASS}@localhost:27017/${MONGO_DB}`
-// MONGO CONFIUGRAIONS
-const mongo = new MongoClient(MONGO_URL, {
-        useNewUrlParser: true, useUnifiedTopology: true
-    }
-)
-
-
-//######## AWS S3 ########
-const AWS_ENDPOINT = new AWS.Endpoint(global.env.DIGITALOCEAN_ENDPOINT)
-
-// S3 Configurations
-const s3 = new AWS.S3({
-    endpoint: AWS_ENDPOINT,
-    accessKeyId: global.env.DIGITALOCEAN_ACCESS_KEY,
-    secretAccessKey: global.env.DIGITALOCEAN_SECRET_ACCESS_KEY
-})
-
-
 // Configure passport with a strategy
-passport.use(new LocalStrategy(
-    {
-        usernameField: 'username',
-        passwordField: 'password',
-        passReqToCallback: true
-    },
-    async (req, username, password, done) => {
-        try {
-            // perform the authentication
-            const data = (await QUERY_SELECT_USER_PASS_WITH_USER([username, password]))
-            if (data.length > 0) {
-                done(null,
-                    // info about the user
-                    {
-                        username: username,
-                        loginTime: (new Date().toString()),
-                        security: 2
-                    }
-                )
-            } else {
-                // Incorrect login
-                done('Incorrect username and/or password', false)
-            }
-        } catch (e) {
-            done(`Error authenticating: ${e}`, false)
-        }
-    }
-))
+passport.use(localStrategy)
 
+const localStrategyAuth = mkAuth(passport, 'local')
 
 // Declare the port to run server on
 const PORT = parseInt(process.argv[2]) || parseInt(process.env.PORT) || 3000
@@ -104,88 +56,6 @@ const app = express()
 // Create an instance of multer
 // const upload = multer()
 const upload = multer({dest: `${__dirname}/uploads/`})
-
-//#endregion
-
-
-
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-
-
-
-/* -------------------------------------------------------------------------- */
-//                          ######## METHODS ########
-/* -------------------------------------------------------------------------- */
-//#region
-
-// Reads the file using fs and returns the buffer as a promise
-const myReadFile = (file) => new Promise((resolve, reject) => {
-    fs.readFile(file, (err, buffer) => {
-        if (err == null) {
-            resolve(buffer)
-        } else {
-            reject("<At myReadfile Function> ", err)
-        }
-    })
-}) 
-
-// Handles the uploading to AWS S3 and returns the key as a promise
-const uploadToS3 = (buffer, req) => new Promise((resolve, reject) => {
-    const key = req.file.filename + '_' + req.file.originalname;
-    const params = {
-        Bucket: 'paf2020',
-        Key: key,
-        Body: buffer,
-        ACL: 'public-read',
-        ContentType: req.file.mimetype,
-        ContentLength: req.file.size,
-        Metadata: {
-            originalName: req.file.originalname,
-            createdTime: '' + (new Date()).getTime(),
-        }
-    }
-    s3.putObject(params, (err, result) => {
-        if (err == null) {
-            resolve(key)
-        } else {
-            reject("<At uploadToS3 Function> ", err)
-        }
-    })
-})
-
-const unlinkAllFiles = (directory) => new Promise((resolve, reject) => {
-    fs.readdir(directory, (err, files) => {
-        if (err) reject("<At unlinkAllFiles Function> ", err)
-      
-        for (const file of files) {
-          fs.unlink(path.join(directory, file), err => {
-            if (err) reject("<At unlinkAllFiles Function> ", err)
-          });
-        }
-        resolve()
-    });
-})
-
-        // make a boilerplate for mongoupload
-const uploadToMongo = (data) => new Promise((resolve, reject) => {
-    const toUpload = {
-        title: data.title,
-        comments: data.comments,
-        img_key: data.key,
-        ts: new Date()
-    }
-    mongo.db(MONGO_DB).collection(MONGO_COLLECTION)
-        .insertOne(toUpload, (err,docsInserted) => {
-            if (!!err) {
-                reject("<At uploadToMongo function> :",err)
-            }
-            else {
-                resolve(docsInserted.insertedId)
-            }
-        })
-})
 
 //#endregion
 
@@ -209,28 +79,66 @@ app.use(morgan('tiny'))
 app.use(express.urlencoded({extended:false}))
 // Parse application/json
 app.use(express.json())
+// initialise passport (must be done after parsing  json / urlencoded)
+app.use(passport.initialize())
 // Apply cors headers to resp
 app.use(cors())
 
 // POST /api/login
-app.post('/api/login', (req, resp) => {
-    console.info(req.body.username)
-    console.info(req.body.password)
-    // Validate credentials
-    if (req.body.username == "a") {
-        resp.status(200)
-        resp.type('application/json')
-        resp.json({token: "testing token", message: ""},)            
-    }
-    resp.status(401)
+app.post('/api/login',
+// passport middleware to perform authentication
+localStrategyAuth,
+(req, resp) => {
+    const currTime = (new Date()).getTime() / 1000
+    const token = jwt.sign({
+        sub: req.user.username,
+        iss: 'myapp',
+        iat: currTime,
+        exp: currTime + (30),
+        data: {
+                // avatar: req.user.avatar,
+            loginTime : req.user.loginTime
+        }
+    }, process.env.ENV_PASSWORD)
+
+    resp.status(200)
     resp.type('application/json')
-    resp.json({token: "testing token", message: "Please check your username/password."},)
+    resp.json({message: `Login at ${new Date()}`, token})
 })
 
-app.post('/api/register', (req, resp) => {
-    // check if username already exists
-    // insert into mongodb if not exists
-    // return success or fail
+app.post('/api/register', async (req, resp) => {
+    const credentials = req.body
+    // check if client has posted the credentials correctly
+    if (!credentials.password || !credentials.username || !credentials.email) {
+        resp.status(401)
+        resp.type('application/json')
+        resp.json({message:"Missing credentials."})
+        return
+    }
+    credentials.password = sha256(credentials.password)
+
+    // check if username already exists    
+    const exists = await checkExistsMongo(credentials)
+    console.info(exists)
+    if (!exists.length <= 0) {
+        console.info(true)
+        resp.status(409)
+        resp.type('application/json')
+        resp.json({message:"Username already exists."})
+        return
+    } else {
+        try {
+            // Insert credentials into mongo database if not exists
+            const insertedId = await insertCredentialsMongo(credentials)
+            console.info("Mongodb inserted ID: ",insertedId)
+        } catch (e) {
+            console.info(e)
+        }
+        resp.status(200)
+        resp.type('application/json')
+        resp.json({message:"Successfully created an account!"})
+        return
+    }
 })
 
 // POST /api/upload
