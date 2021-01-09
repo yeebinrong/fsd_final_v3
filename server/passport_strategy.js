@@ -2,10 +2,11 @@
 //                      ######## PASSPORT ########
 /* -------------------------------------------------------------------------- */
 //#region 
-const { checkExistsMongo, checkCredentialsMongo } = require('./db_utils.js')
+const { checkCredentialsMongo } = require('./db_utils.js')
 const sha256 = require('sha256')
 
 const LocalStrategy = require('passport-local').Strategy
+const Auth0Strategy = require('passport-auth0');
 
 const localStrategy = new LocalStrategy(
     {

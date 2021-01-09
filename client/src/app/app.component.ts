@@ -21,7 +21,7 @@ export class AppComponent implements OnInit, OnDestroy {
         this.isLogin = bool
         console.info("bool ", bool)
         if (!this.isLogin) {
-          this.router.navigate(['/login'])
+          // this.router.navigate(['/login'])
         }
       })
   }

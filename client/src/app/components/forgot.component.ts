@@ -22,14 +22,6 @@ export class ForgotComponent implements OnInit {
 
   // Handles the form when submit button is clicked
   async onSubmit() {
-    // try {
-    //   this.errorMessage = ''
-    //   await this.apiSvc.apiLogin(this.form.value)
-    //   this.router.navigate(['/main'])
-    // } catch (e) {
-    //   this.errorMessage = e.error.msg;
-    //   console.log("Authentication error:", e.error.msg)
-    // }
     this.errorMessage = ''
     this.authSvc.login(this.form.value)
     .then (msg => {

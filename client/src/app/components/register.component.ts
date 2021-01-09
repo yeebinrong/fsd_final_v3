@@ -51,9 +51,9 @@ export class RegisterComponent implements OnInit {
   // Generates the form
   private createForm () {
     this.form = this.fb.group({
-      username: this.fb.control('johndoe', [Validators.required]),
-      email: this.fb.control('johndoe@gmail.com', [Validators.required, Validators.pattern(/^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/)]),
-      password: this.fb.control('johndoe', [Validators.required]),
+      username: this.fb.control('', [Validators.required]),
+      email: this.fb.control('', [Validators.required, Validators.pattern(/^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/)]),
+      password: this.fb.control('', [Validators.required]),
     })
   }
 }

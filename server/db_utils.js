@@ -59,8 +59,7 @@ const unlinkAllFiles = (directory) => new Promise((resolve, reject) => {
 const mkMongo = (QUERY) => {
     return async (PARAMS) => {
         try {
-            const result = await QUERY(PARAMS)
-            return result
+            return await QUERY(PARAMS)
         } catch (e) {
             return e
         }
@@ -94,20 +93,6 @@ const MONGO_CHECK_CREDENTIALS = async (PARAMS) => {
 const insertCredentialsMongo = mkMongo(MONGO_INSERT_CREDENTIALS)
 const checkExistsMongo = mkMongo(MONGO_CHECK_USER_EXISTS)
 const checkCredentialsMongo = mkMongo(MONGO_CHECK_CREDENTIALS)
-
-// const checkCredentialsMongo = (mongo, DB, COLLECTION, data) => new Promise( async (resolve, reject) => {
-//     console.info("username is" ,data.username)
-//     console.info("password is" ,data.password)
-//     const result = await mongo.db(DB).collection(COLLECTION)
-//     .find({username:data.username, password:data.password})
-//     .toArray()
-//     console.info(result)
-//     if (result.length <= 0) {
-//         resolve(false)
-//     } else {
-//         resolve(true)
-//     }
-// })
 
 //#endregion
 

@@ -9,6 +9,8 @@ const morgan = require('morgan')
 const cors = require('cors')
 
 const jwt = require('jsonwebtoken')
+const auth0_jwt = require('express-jwt');
+const auth0_jwksRsa = require('jwks-rsa');
 
 // Passport core
 const passport = require('passport')
@@ -28,6 +30,7 @@ const {
 
 const { myReadFile, uploadToS3, unlinkAllFiles, insertCredentialsMongo, checkExistsMongo, checkCredentialsMongo } = require('./db_utils.js')
 const { } = require('./helper.js')
+const { sign } = require('crypto')
 
 //#endregion
 
@@ -49,6 +52,37 @@ passport.use(localStrategy)
 
 const localStrategyAuth = mkAuth(passport, 'local')
 
+// Check the token for Auth0
+const checkJwt = auth0_jwt({
+    // Dynamically provide a signing key
+    // based on the kid in the header and 
+    // the signing keys provided by the JWKS endpoint.
+    secret: auth0_jwksRsa.expressJwtSecret({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri: `https://binrong.us.auth0.com/.well-known/jwks.json`
+    }),
+  
+    // Validate the audience and the issuer.
+    issuer: `https://binrong.us.auth0.com/`,
+    algorithms: ['RS256']
+  });
+
+const signToken = (payload) => {
+    const currTime = (new Date()).getTime() / 1000
+    return  jwt.sign({
+        sub: payload.username,
+        iss: 'myapp',
+        iat: currTime,
+        exp: currTime + (30),
+        data: {
+                // avatar: req.user.avatar,
+            loginTime : payload.loginTime
+        }
+    }, process.env.ENV_PASSWORD)
+}
+  
 // Declare the port to run server on
 const PORT = parseInt(process.argv[2]) || parseInt(process.env.PORT) || 3000
 // Create an instance of express
@@ -89,20 +123,22 @@ app.post('/api/login',
 // passport middleware to perform authentication
 localStrategyAuth,
 (req, resp) => {
-    const currTime = (new Date()).getTime() / 1000
-    const token = jwt.sign({
-        sub: req.user.username,
-        iss: 'myapp',
-        iat: currTime,
-        exp: currTime + (30),
-        data: {
-                // avatar: req.user.avatar,
-            loginTime : req.user.loginTime
-        }
-    }, process.env.ENV_PASSWORD)
+    const token = signToken(req.user)
 
     resp.status(200)
     resp.type('application/json')
+    resp.json({message: `Login at ${new Date()}`, token})
+})
+
+app.post('/api/auth0-login',
+// auth0 middleware
+checkJwt,
+(req, resp) => {
+    console.info(req.body)
+    const token = signToken(req.body)
+    console.info(token)
+    resp.status(200)
+    resp.type("application/json")
     resp.json({message: `Login at ${new Date()}`, token})
 })
 

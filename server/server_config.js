@@ -25,7 +25,6 @@ const mongo = new MongoClient(MONGO_URL, {
     }
 )
 
-
 //######## AWS S3 ########
 const AWS_ENDPOINT = new AWS.Endpoint(global.env.DIGITALOCEAN_ENDPOINT)
 

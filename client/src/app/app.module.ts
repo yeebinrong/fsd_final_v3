@@ -10,6 +10,8 @@ import { FormsModule, ReactiveFormsModule} from '@angular/forms';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { HttpClientModule } from '@angular/common/http';
 
+import { AuthModule } from '@auth0/auth0-angular';
+
 import { LoginComponent } from './components/login.component';
 import { MainComponent } from './components/main.component';
 import { AuthGuardService } from './services/authguard.service';
@@ -24,7 +26,7 @@ import { ApiService } from './services/api.service';
     LoginComponent,
     MainComponent,
     RegisterComponent,
-    ForgotComponent
+    ForgotComponent,
   ],
   imports: [
     BrowserModule,
@@ -35,6 +37,10 @@ import { ApiService } from './services/api.service';
     ReactiveFormsModule,
     FlexLayoutModule,
     HttpClientModule,
+    AuthModule.forRoot({
+      domain:'binrong.us.auth0.com',
+      clientId:'JSiQsFmldMnJizNk3s2Q796mwcoE40Vv'
+    })
   ],
   providers: [AuthGuardService, WebSocketService, ApiService],
   bootstrap: [AppComponent]

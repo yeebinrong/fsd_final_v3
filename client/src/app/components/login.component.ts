@@ -35,6 +35,10 @@ export class LoginComponent implements OnInit {
     })
   }
 
+  auth0Login() {
+    this.authSvc.auth0Login()
+  }
+
 /* -------------------------------------------------------------------------- */
 //                    ######## PRIVATE FUNCTIONS ########
 /* -------------------------------------------------------------------------- */
@@ -42,8 +46,8 @@ export class LoginComponent implements OnInit {
   // Generates the form
   private createForm () {
     this.form = this.fb.group({
-      username: this.fb.control('', [Validators.required]),
-      password: this.fb.control('', [Validators.required]),
+      username: this.fb.control('johndoe', [Validators.required]),
+      password: this.fb.control('johndoe', [Validators.required]),
     })
   }
 }
