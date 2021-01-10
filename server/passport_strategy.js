@@ -23,8 +23,9 @@ const localStrategy = new LocalStrategy(
                 done(null,
                     // info about the user
                     {
-                        username: username,
-                        // retrieve profile picture
+                        name: username,
+                        email: data[0].email,
+                        avatar: data[0].avatar
                         // retrieve match history
                     }
                 )
@@ -57,7 +58,6 @@ const mkAuth = (passport, strategy) => {
                   }
                 // need to set req.user to user if using custom middleware
                 req.user = user
-                console.info(user)
                 next()
             }
         )(req, resp, next)

@@ -19,6 +19,9 @@ import { WebSocketService } from './services/websocket.service';
 import { RegisterComponent } from './components/register.component';
 import { ForgotComponent } from './components/forgot.component';
 import { ApiService } from './services/api.service';
+import { ProfileComponent } from './components/m/profile.component';
+import { GameComponent } from './components/m/game.component';
+import { ChatComponent } from './components/m/chat.component';
 
 @NgModule({
   declarations: [
@@ -27,6 +30,9 @@ import { ApiService } from './services/api.service';
     MainComponent,
     RegisterComponent,
     ForgotComponent,
+    ProfileComponent,
+    GameComponent,
+    ChatComponent,
   ],
   imports: [
     BrowserModule,

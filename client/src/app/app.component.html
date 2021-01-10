@@ -5,5 +5,7 @@
     <button *ngIf="isLogin" type="button" mat-raised-button (click)="logout()">Logout</button>
   </mat-toolbar>
   <!-- Add router outlet for routes -->
-  <router-outlet></router-outlet>
+  <div fxFlex="92">
+    <router-outlet></router-outlet>
+  </div>
 </div>

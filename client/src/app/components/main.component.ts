@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { AuthService } from '@auth0/auth0-angular';
 
 @Component({
   selector: 'app-main',
@@ -8,13 +7,9 @@ import { AuthService } from '@auth0/auth0-angular';
 })
 export class MainComponent implements OnInit {
 
-  constructor(private auth:AuthService) { }
+  constructor() { }
 
   ngOnInit(): void {
-    this.auth.user$.toPromise()
-    .then(result => {
-      console.info(result)
-    })
   }
 
 }

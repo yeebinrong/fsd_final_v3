@@ -19,9 +19,8 @@ export class AppComponent implements OnInit, OnDestroy {
     this.$isLogin = this.authSvc.isLogin()
       .subscribe(bool => {
         this.isLogin = bool
-        console.info("bool ", bool)
         if (!this.isLogin) {
-          // this.router.navigate(['/login'])
+          this.router.navigate(['/login'])
         }
       })
   }

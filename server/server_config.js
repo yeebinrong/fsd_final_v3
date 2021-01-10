@@ -35,6 +35,7 @@ const s3 = new AWS.S3({
     secretAccessKey: global.env.DIGITALOCEAN_SECRET_ACCESS_KEY
 })
 
+const ENV_PASSWORD = process.env.ENV_PASSWORD
 //#endregion
 
 
@@ -44,5 +45,5 @@ const s3 = new AWS.S3({
 /* -------------------------------------------------------------------------- */
 
 module.exports = {
-    MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, AWS_ENDPOINT, s3
+    MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, AWS_ENDPOINT, s3, ENV_PASSWORD
 }

@@ -30,12 +30,24 @@ button:disabled {
     color: red;
 }
 
+.fill {
+    height: 100%;
+}
+
+.avatar {
+    height: 120px !important;
+    width: 120px !important;
+}
+
 /* MARGIN & PADDINGS */
 .m-1 {
     margin: 1rem !important;
 }
 .ml-1 {
     margin-left: 1rem !important;
+}
+.ml-05 {
+    margin-left: 0.5rem !important;
 }
 .mr-1 {
     margin-right: 1rem !important;

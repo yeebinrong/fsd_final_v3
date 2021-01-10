@@ -4,6 +4,7 @@
 //#region 
 
 const express = require('express')
+const expressWS = require('express-ws')
 const secure = require('secure-env')
 const morgan = require('morgan')
 const cors = require('cors')
@@ -25,12 +26,13 @@ const fs = require('fs')
 
 const { 
     MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, 
-    AWS_ENDPOINT, s3 
+    AWS_ENDPOINT, s3, ENV_PASSWORD, ENV_PORT
 } = require('./server_config.js')
 
-const { myReadFile, uploadToS3, unlinkAllFiles, insertCredentialsMongo, checkExistsMongo, checkCredentialsMongo } = require('./db_utils.js')
+const { myReadFile, uploadToS3, unlinkAllFiles, insertCredentialsMongo, checkExistsMongo } = require('./db_utils.js')
 const { } = require('./helper.js')
-const { sign } = require('crypto')
+
+const ROOMS = {}
 
 //#endregion
 
@@ -67,26 +69,29 @@ const checkJwt = auth0_jwt({
     // Validate the audience and the issuer.
     issuer: `https://binrong.us.auth0.com/`,
     algorithms: ['RS256']
-  });
+});
 
+// Sign a jwt token
 const signToken = (payload) => {
     const currTime = (new Date()).getTime() / 1000
     return  jwt.sign({
         sub: payload.username,
         iss: 'myapp',
         iat: currTime,
-        exp: currTime + (30),
+        // exp: currTime + (30),
         data: {
-                // avatar: req.user.avatar,
+            // avatar: req.user.avatar,
             loginTime : payload.loginTime
         }
-    }, process.env.ENV_PASSWORD)
+    }, ENV_PASSWORD)
 }
   
 // Declare the port to run server on
-const PORT = parseInt(process.argv[2]) || parseInt(process.env.PORT) || 3000
+const PORT = parseInt(process.argv[2]) || parseInt(ENV_PORT) || 3000
 // Create an instance of express
 const app = express()
+// Create an instance for express ws
+const appWS = expressWS(app)
 // Create an instance of multer
 // const upload = multer()
 const upload = multer({dest: `${__dirname}/uploads/`})
@@ -124,22 +129,20 @@ app.post('/api/login',
 localStrategyAuth,
 (req, resp) => {
     const token = signToken(req.user)
-
     resp.status(200)
     resp.type('application/json')
-    resp.json({message: `Login at ${new Date()}`, token})
+    resp.json({message: `Login at ${new Date()}`, token, user: req.user})
 })
 
 app.post('/api/auth0-login',
 // auth0 middleware
 checkJwt,
 (req, resp) => {
-    console.info(req.body)
+    console.info("body is",req.body)
     const token = signToken(req.body)
-    console.info(token)
     resp.status(200)
     resp.type("application/json")
-    resp.json({message: `Login at ${new Date()}`, token})
+    resp.json({message: `Login at ${new Date()}`, token, user: req.body})
 })
 
 app.post('/api/register', async (req, resp) => {
@@ -155,9 +158,7 @@ app.post('/api/register', async (req, resp) => {
 
     // check if username already exists    
     const exists = await checkExistsMongo(credentials)
-    console.info(exists)
     if (!exists.length <= 0) {
-        console.info(true)
         resp.status(409)
         resp.type('application/json')
         resp.json({message:"Username already exists."})
@@ -196,6 +197,43 @@ app.post('/api/upload', upload.single('file'), async (req, resp) => {
         resp.type('application/json')
         resp.json({})
     }
+})
+
+app.get('/api/check', (req, resp, next) => {
+    const auth = req.get('Authorization')
+    if (null == auth) {
+        resp.status(403)
+        resp.type('application/json')
+        resp.json({message:"Missing Authorization Header."})
+        return
+    }
+    const terms = auth.split(' ')
+    if ((terms.length != 2) || (terms[0] != 'Bearer')) {
+        resp.status(403)
+        resp.json({message: 'Incorrect Authorization'})
+        return
+    }
+    const token = terms[1]
+    jwt.verify(token, ENV_PASSWORD, (err, decoded) => {
+        if (err) {
+            resp.status(403)
+            resp.type('application/json')
+            resp.json({message: "Incorrect Token: " + err})
+        } else {
+            // req.token = decoded
+            next()
+        }
+    })
+}, (req, resp) => {
+    resp.status(200)
+    resp.type('application/json')
+    resp.json({message: 'Authentication successful'})
+})
+
+// Websocket room
+app.ws('/room', (ws, req) => {
+    const payload = JSON.parse(req.query.payload)
+    console.info("payload",payload)
 })
 
 // Resource not found
