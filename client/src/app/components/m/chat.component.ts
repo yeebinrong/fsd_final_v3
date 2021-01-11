@@ -20,7 +20,7 @@ export class ChatComponent implements OnInit {
   ngOnInit(): void {
     this.createForm()
     this.event$ = this.socketService.event.subscribe(chat => {
-      this.messages.push(chat)
+      this.messages.unshift(chat)
     })
     this.roomDetails = this.socketService.getRoomDetails()
   }
@@ -38,7 +38,7 @@ export class ChatComponent implements OnInit {
   // Generates the form
   private createForm () {
     this.form = this.fb.group({
-      message: this.fb.control(''),
+      message: this.fb.control('', [Validators.required]),
     })
   }
 }

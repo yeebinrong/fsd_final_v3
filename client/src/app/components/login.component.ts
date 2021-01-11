@@ -23,7 +23,7 @@ export class LoginComponent implements OnInit {
   }
 
   // Handles the form when submit button is clicked
-  async onSubmit() {
+  onSubmit() {
     const credentials: UserPass = {
       username: this.form.get('username').value,
       password: this.sha1(this.form.get('password').value),

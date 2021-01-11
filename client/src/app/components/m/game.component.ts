@@ -1,6 +1,7 @@
 import { Component, Host, OnInit, Output } from '@angular/core';
 import { EventEmitter } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { create } from 'domain';
 import { ApiService } from 'src/app/services/api.service';
@@ -20,8 +21,7 @@ export class GameComponent implements OnInit {
   message:string
   hosts:Host[] = []
 
-  constructor(private fb:FormBuilder, private apiSvc:ApiService, private activatedRoute:ActivatedRoute, private authSvc:AuthGuardService, private router:Router, private socketService:WebSocketService) { }
-
+  constructor(private fb:FormBuilder, private apiSvc:ApiService, private snackbar:MatSnackBar, private activatedRoute:ActivatedRoute, private authSvc:AuthGuardService, private router:Router, private socketService:WebSocketService) { }
   ngOnInit(): void {
     this.hosts = []
     const code = this.activatedRoute.snapshot.params.code
@@ -56,6 +56,7 @@ export class GameComponent implements OnInit {
         this.form.get('code').setValue(code)
         this.socketService.setRoomDetails(this.form.value)
         this.router.navigate(['/main',code])
+        this.snackbar.open("Room created!", "Close", {duration: 3000})
       } else {
         console.error("Please re-login.")
         this.authSvc.logout()
@@ -67,6 +68,7 @@ export class GameComponent implements OnInit {
     this.apiSvc.getHosts()
     .then (data => {
       this.hosts = data
+      this.snackbar.open("Rooms refreshed!", "Close", {duration: 3000})
     })
   }
 
@@ -80,7 +82,7 @@ export class GameComponent implements OnInit {
   // Generates the form
   private createForm () {
     this.form = this.fb.group({
-      room: this.fb.control('', [Validators.required]),
+      room: this.fb.control('New Room', [Validators.required]),
       password: this.fb.control(''),
       code: this.fb.control('')
     })

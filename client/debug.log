@@ -61,3 +61,4 @@
 [0110/152947.548:ERROR:filesystem_win.cc(129)] GetFileAttributes C:\Users\Bin Rong\AppData\Local\Google\Chrome\User Data\Crashpad\attachments\8dd1f75f-8104-4cd2-b51a-529b5b657675: The system cannot find the path specified. (0x3)
 [0111/091840.300:ERROR:directory_reader_win.cc(43)] FindFirstFile: The system cannot find the path specified. (0x3)
 [0111/151949.964:ERROR:file_io.cc(135)] WriteFile: The pipe is being closed. (0xE8)
+[0111/194924.439:ERROR:directory_reader_win.cc(43)] FindFirstFile: The system cannot find the path specified. (0x3)

@@ -82,6 +82,39 @@ button:disabled {
 /*                                  DEFAULTS                                  */
 /* -------------------------------------------------------------------------- */
 
+.mat-card.scrollable-content {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+  
+  .mat-card.scrollable-content > .mat-card-title-group {
+    display: block;
+}
+  
+  .mat-card.scrollable-content > .mat-card-content {
+    overflow-y: auto;
+    white-space: normal;
+    line-height: normal;
+}
+  
+.hover {
+    border-radius: 0.3rem;
+    box-sizing: border-box;
+    transition: all 1s;
+    background-color: rgba(200,200,200,200);
+    color: rgba(50,50,50,100);
+}
+
+.hover:hover {
+    border: solid 1px black;
+    border-collapse: collapse;
+    background-color: rgba(230,230,230,230) !important;
+    color: black;
+    cursor: pointer;
+    transform: scale(0.98);
+}
+
 p {
     white-space: normal;
     line-height: normal;

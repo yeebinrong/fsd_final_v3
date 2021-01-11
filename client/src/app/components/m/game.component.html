@@ -9,14 +9,15 @@
                 <input type="text" matInput formControlName="room" placeholder="Your room name.">
                 <mat-error>Please enter your room name.</mat-error>
             </mat-form-field>
-            <mat-form-field appearance="outline"> <!-- Password Input -->
+            <!-- Password Input -->
+            <!-- <mat-form-field appearance="outline"> 
                 <mat-label>[Optional] Password</mat-label>
                 <input [type]="hide ? 'password' : 'text'" matInput formControlName="password" placeholder="Your password." autocomplete="off">
                 <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
                     <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
                 </button>
                 <mat-error>Please enter your password.</mat-error>
-            </mat-form-field>
+            </mat-form-field> -->
             <button type="button" color="primary" (click)="onSubmit()" [disabled]="form.invalid" mat-raised-button>Submit</button>
             <button type="button" class="mt-1" (click)="back()" mat-raised-button color="accent">Back</button>
         </form>
@@ -28,19 +29,34 @@
             </div>
             <div fxLayout="column">
                 <mat-card class="mt-1" fxLayoutAlign="row">
-                    <span>Room name</span>
+                    <strong fxFlex="80">
+                        <span>Room name</span>
+                    </strong>
+                    <strong fxFlex="10">
+                        Players
+                    </strong>
                     <span class="spacer"></span>
-                    <span>Host name</span>
+                    <strong>
+                        <span>Host name</span>
+                    </strong>
                 </mat-card>
-                <mat-card *ngFor="let i of hosts" class="mt-1" fxLayoutAlign="row">
-                    <span>
-                        {{i['room']}}
-                    </span>
-                    <span class="spacer"></span>
-                    <span>
-                        {{i['name']}}
-                    </span>
+                <mat-card *ngIf="hosts.length <= 0" class="m-1 text-center">
+                    No rooms available!
                 </mat-card>
+                <ng-container *ngFor="let i of hosts">
+                    <mat-card mat-raised-button class="mt-1 hover" [routerLink]="['/main',i['code']]" fxLayoutAlign="row">
+                        <span fxFlex="80">
+                            {{i['room']}}
+                        </span>
+                        <span fxFlex="10">
+                            4/4
+                        </span>
+                        <span class="spacer"></span>
+                        <span>
+                            {{i['name']}}
+                        </span>
+                    </mat-card>
+                </ng-container>
             </div>
         </div>
     </div>

@@ -1,4 +1,4 @@
-<mat-card class="p-0 m-1" fxFlex fxLayout="column">
+<mat-card class="p-0 mr-1 mt-1 mb-1 scrollable-content" fxFlex fxLayout="column">
     <mat-card-header fxLayoutAlign="center">
         <mat-card-title class="mt-1 text-center" fxLayout="column" fxLayoutAlign="center stretch">
                 Chat Room
@@ -8,7 +8,7 @@
     </mat-card-header>
     <mat-card-content class="ml-1 mr-1" fxFlex>
         <p *ngFor="let i of messages">
-            [{{i.ts}}] {{i.from}} : {{i.message}}
+            [{{i.ts}}] <strong *ngIf="i.from == 'Server'">{{i.from}}</strong>{{i.from != "Server" ? i.from : ""}} : {{i.message}}
         </p>
     </mat-card-content>
     <form [formGroup]="form" fxLayout="column" class="ml-1 mr-1 mb-1" (ngSubmit)="onSubmit()">
