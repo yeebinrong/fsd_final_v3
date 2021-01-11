@@ -26,7 +26,7 @@ const fs = require('fs')
 
 const { 
     MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, 
-    AWS_ENDPOINT, s3, ENV_PASSWORD, ENV_PORT
+    AWS_ENDPOINT, s3, ENV_PASSWORD, ENV_PORT, AUTH0_JWKS_URI, AUTH0_ISSUER
 } = require('./server_config.js')
 
 const { myReadFile, uploadToS3, unlinkAllFiles, insertCredentialsMongo, checkExistsMongo } = require('./db_utils.js')
