@@ -19,13 +19,12 @@ const passport = require('passport')
 const { localStrategy, mkAuth } = require('./passport_strategy.js')
 const sha256 = require('sha256')
 
-const { MongoClient} = require('mongodb')
 const AWS = require('aws-sdk')
 const multer = require('multer')
 const fs = require('fs')
 
 const { 
-    MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, 
+    MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, MONGO_URL,
     AWS_ENDPOINT, s3, ENV_PASSWORD, ENV_PORT, AUTH0_JWKS_URI, AUTH0_ISSUER
 } = require('./server_config.js')
 
@@ -34,6 +33,7 @@ const { } = require('./helper.js')
 
 const ROOMS = { }
 const HOSTS = { }
+const USER_LOGGED_IN = []
 //#endregion
 
 
@@ -129,22 +129,55 @@ app.post('/api/login',
 localStrategyAuth,
 (req, resp) => {
     const token = signToken(req.user)
+    if(CHECK_AND_ADD_USER(req.user.name)) {
+        resp.status(406)
+        resp.type('application/json')
+        resp.json({message:"Already logged in."})
+        return
+    }
+    console.info(req.user)
     resp.status(200)
     resp.type('application/json')
     resp.json({message: `Login at ${new Date()}`, token, user: req.user})
 })
 
+// POST /api/auth0-login
 app.post('/api/auth0-login',
 // auth0 middleware
 checkJwt,
 (req, resp) => {
     console.info("body is",req.body)
     const token = signToken(req.body)
+    if (CHECK_AND_ADD_USER(req.body.name)) {
+        resp.status(406)
+        resp.type('application/json')
+        resp.json({message:"Already logged in."})
+        return
+    }
     resp.status(200)
     resp.type("application/json")
     resp.json({message: `Login at ${new Date()}`, token, user: req.body})
 })
 
+const CHECK_AND_ADD_USER = (user) => {
+    const bool = USER_LOGGED_IN.find(u => {
+        return u == user
+    })
+    console.info("exists?",!!bool)
+    console.info(USER_LOGGED_IN)
+    console.info(user)
+    if (!bool) {
+        USER_LOGGED_IN.push(user)
+    }
+    return bool
+}
+
+app.post('/api/logout', (req, resp) => {
+    const index = USER_LOGGED_IN.indexOf(req.body.name)
+    USER_LOGGED_IN.splice(index, 1)
+})
+
+// POST /api/register
 app.post('/api/register', async (req, resp) => {
     const credentials = req.body
     // check if client has posted the credentials correctly
@@ -199,6 +232,7 @@ app.post('/api/upload', upload.single('file'), async (req, resp) => {
     }
 })
 
+// POST /api/check
 app.get('/api/check', (req, resp, next) => {
     const auth = req.get('Authorization')
     if (null == auth) {
@@ -280,6 +314,7 @@ app.ws('/room', (ws, req) => {
         delete ROOMS[code][name]
         if (Object.keys(ROOMS[code]).length <= 0) {
             delete ROOMS[code]
+            delete HOSTS[code]
         }
 
         const chat = JSON.stringify({

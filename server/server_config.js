@@ -48,5 +48,5 @@ const AUTH0_ISSUER = process.env.AUTH0_ISSUER
 /* -------------------------------------------------------------------------- */
 
 module.exports = {
-    MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, AWS_ENDPOINT, s3, ENV_PASSWORD, AUTH0_ISSUER, AUTH0_JWKS_URI
+    MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, MONGO_URL, AWS_ENDPOINT, s3, ENV_PASSWORD, AUTH0_ISSUER, AUTH0_JWKS_URI
 }
