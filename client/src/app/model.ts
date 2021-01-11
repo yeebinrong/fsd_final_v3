@@ -14,3 +14,9 @@ export interface UserProfile {
     email: string,
     avatar: string
 }
+
+export interface ChatMessage {
+    from: string,
+    message: string,
+    ts: string
+}

@@ -1,3 +1,18 @@
-<mat-card class="p-0 m-1" fxFlex>
-    <p>chat works!</p>
+<mat-card class="p-0 m-1" fxFlex fxLayout="column">
+    <mat-card-header>
+        <mat-card-title class="mt-1">Chat Room</mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="ml-1 mr-1" fxFlex>
+        <p *ngFor="let i of messages">
+            [{{i.ts}}] {{i.from}} : {{i.message}}
+        </p>
+    </mat-card-content>
+    <form [formGroup]="form" fxLayout="column" class="ml-1 mr-1 mb-1" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="legacy"> <!-- Message Input -->
+            <input type="text" matInput formControlName="message" placeholder="Your message">
+        </mat-form-field>
+        <button type="submit" mat-raised-button color="accent" 
+            [disabled]="form.invalid">Send Message
+        </button>
+    </form>
 </mat-card>

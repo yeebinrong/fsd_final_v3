@@ -6,11 +6,13 @@ import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable()
 export class AuthGuardService implements CanActivate {
-  private token = 'a'
+  private token = ''
   private user = {}
   private $isLogin: BehaviorSubject<boolean>
 
   constructor(private router:Router, private http:HttpClient, private auth:AuthService) {
+    this.token = sessionStorage.getItem('token')
+    this.user = JSON.parse(sessionStorage.getItem('user'))
     if (this.token == '') {
       this.router.navigate(['/login'])
     }
@@ -28,7 +30,9 @@ export class AuthGuardService implements CanActivate {
           .then(resp => {
             if (resp.status == 200) {
               this.token = resp.body.token
+              sessionStorage.setItem('token', this.token)
               this.user = resp.body.user
+              sessionStorage.setItem('user', JSON.stringify(this.user))
               this.$isLogin.next(!!this.token)
               this.router.navigate(['/main'])
               isAuth.unsubscribe()
@@ -51,7 +55,9 @@ export class AuthGuardService implements CanActivate {
     .then(resp => {
       if (resp.status == 200) {
         this.token = resp.body.token
+        sessionStorage.setItem('token', this.token)
         this.user = resp.body.user
+        sessionStorage.setItem('user', JSON.stringify(this.user))
         this.$isLogin.next(!!this.token)
         this.router.navigate(['/main'])
       }
@@ -70,7 +76,9 @@ export class AuthGuardService implements CanActivate {
 
   logout() {
     this.token = ''
+    sessionStorage.removeItem('token')
     this.user = {}
+    sessionStorage.removeItem('user')
     this.$isLogin.next(!!this.token)
   }
 

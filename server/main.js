@@ -32,7 +32,7 @@ const {
 const { myReadFile, uploadToS3, unlinkAllFiles, insertCredentialsMongo, checkExistsMongo } = require('./db_utils.js')
 const { } = require('./helper.js')
 
-const ROOMS = {}
+const ROOMS = { }
 
 //#endregion
 
@@ -230,10 +230,57 @@ app.get('/api/check', (req, resp, next) => {
     resp.json({message: 'Authentication successful'})
 })
 
+const broadcastMsg = (code, chat) => {
+    for (let i in ROOMS[code]) {
+        console.info("sending message")
+        ROOMS[code][i].send(chat)
+    }
+}
+
 // Websocket room
 app.ws('/room', (ws, req) => {
+    // need to check if room already exist
     const payload = JSON.parse(req.query.payload)
+    const name = payload.name == "server" ? "fake_server" : payload.name
+    const code = payload.code
     console.info("payload",payload)
+    ROOMS[code] = ROOMS[code] ? ROOMS[code] : {}
+    ROOMS[code][name] = ws
+    ws.name = payload.name
+    const chat = JSON.stringify({
+        from: 'Server',
+        message: `${name} has joined the room.`,
+        ts: (new Date().toTimeString().split(' ')[0])
+    })
+    // broadcast to everyone in the room
+    broadcastMsg(code, chat)
+        
+    ws.on('message', (data) => {
+        console.info('Message incoming:',data)
+        const chat = JSON.stringify({
+            from: name,
+            message: data,
+            ts: (new Date().toTimeString().split(' ')[0])
+        })
+        console.info(chat)
+        // broadcast to everyone in the room
+        broadcastMsg(code, chat)
+    })
+
+    ws.on('close', () => {
+        console.info(`Closing websocket connection for ${name}`)
+        // close our end of connection
+        ROOMS[code][name].close()
+        // remove ourself from the room
+        delete ROOMS[code][name]
+
+        const chat = JSON.stringify({
+            from: 'Server',
+            message: `${name} has left the room.`,
+            ts: (new Date().toTimeString().split(' ')[0])
+        })
+        broadcastMsg(code, chat)
+    })
 })
 
 // Resource not found

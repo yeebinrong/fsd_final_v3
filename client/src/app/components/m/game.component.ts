@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output } from '@angular/core';
+import { EventEmitter } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthGuardService } from 'src/app/services/authguard.service';
 import { WebSocketService } from 'src/app/services/websocket.service';
 
@@ -15,7 +17,7 @@ export class GameComponent implements OnInit {
   hide:boolean
   message:string
 
-  constructor(private fb:FormBuilder, private authSvc:AuthGuardService, private socketService:WebSocketService) { }
+  constructor(private fb:FormBuilder, private authSvc:AuthGuardService, private router:Router, private socketService:WebSocketService) { }
 
   ngOnInit(): void {
   }
@@ -39,7 +41,10 @@ export class GameComponent implements OnInit {
     this.authSvc.checkToken()
     .then(bool => {
       if (bool) {
-        this.socketService.CreateRoom(this.form.value)
+        const code = this.socketService.generateCode()
+        this.form.get('code').setValue(code)
+        this.socketService.setRoomDetails(this.form.value)
+        this.router.navigate(['/main',code])
       } else {
         console.error("Please re-login.")
         this.authSvc.logout()
@@ -62,6 +67,7 @@ export class GameComponent implements OnInit {
     this.form = this.fb.group({
       room: this.fb.control('', [Validators.required]),
       password: this.fb.control(''),
+      code: this.fb.control('')
     })
   }
 }

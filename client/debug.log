@@ -59,3 +59,4 @@
 [0110/152947.540:ERROR:filesystem_win.cc(129)] GetFileAttributes C:\Users\Bin Rong\AppData\Local\Google\Chrome\User Data\Crashpad\attachments\cc9e7b16-5edb-41e6-a886-e77f89420f48: The system cannot find the path specified. (0x3)
 [0110/152947.544:ERROR:filesystem_win.cc(129)] GetFileAttributes C:\Users\Bin Rong\AppData\Local\Google\Chrome\User Data\Crashpad\attachments\1f758e8c-b9d6-466b-8061-c3a7974b5331: The system cannot find the path specified. (0x3)
 [0110/152947.548:ERROR:filesystem_win.cc(129)] GetFileAttributes C:\Users\Bin Rong\AppData\Local\Google\Chrome\User Data\Crashpad\attachments\8dd1f75f-8104-4cd2-b51a-529b5b657675: The system cannot find the path specified. (0x3)
+[0111/091840.300:ERROR:directory_reader_win.cc(43)] FindFirstFile: The system cannot find the path specified. (0x3)
