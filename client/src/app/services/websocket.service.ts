@@ -1,7 +1,6 @@
 import { HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/internal/Subject';
 import { v4 as uuidv4 } from 'uuid';
 import { ChatMessage } from '../model';
@@ -18,6 +17,9 @@ export class WebSocketService {
   setRoomDetails (values) {
     console.info("room details are",values)
     this.roomDetails = values
+  }
+  getRoomDetails () {
+    return this.roomDetails
   }
 
   generateCode () {
@@ -73,6 +75,7 @@ export class WebSocketService {
       this.ws.close()
       this.ws= null
     }
+    this.router.navigate(['/main'])
   }
 
   sendMessage(message) {

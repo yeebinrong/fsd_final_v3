@@ -20,3 +20,10 @@ export interface ChatMessage {
     message: string,
     ts: string
 }
+
+export interface Host {
+    room: string,
+    password: string,
+    code: string,
+    name: string
+}

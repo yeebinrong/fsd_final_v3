@@ -13,6 +13,7 @@ export class ChatComponent implements OnInit {
   form:FormGroup
   event$:Subscription
   messages:ChatMessage[] = []
+  roomDetails = {}
 
   constructor(private fb:FormBuilder, private socketService:WebSocketService) { }
 
@@ -21,12 +22,17 @@ export class ChatComponent implements OnInit {
     this.event$ = this.socketService.event.subscribe(chat => {
       this.messages.push(chat)
     })
+    this.roomDetails = this.socketService.getRoomDetails()
   }
 
   onSubmit() {
     const message = this.form.get('message').value
     this.socketService.sendMessage(message)
     this.form.reset()
+  }
+
+  leaveRoom() {
+    this.socketService.leave()
   }
 
   // Generates the form

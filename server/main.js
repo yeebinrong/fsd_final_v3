@@ -33,7 +33,7 @@ const { myReadFile, uploadToS3, unlinkAllFiles, insertCredentialsMongo, checkExi
 const { } = require('./helper.js')
 
 const ROOMS = { }
-
+const HOSTS = { }
 //#endregion
 
 
@@ -237,16 +237,21 @@ const broadcastMsg = (code, chat) => {
     }
 }
 
-// Websocket room
+// Websocket create / join a room
 app.ws('/room', (ws, req) => {
-    // need to check if room already exist
     const payload = JSON.parse(req.query.payload)
     const name = payload.name == "server" ? "fake_server" : payload.name
     const code = payload.code
     console.info("payload",payload)
+    // need to create a room first or else [name] will have undefined error
+    if (!ROOMS[code]) {
+        // first time creating room 
+        HOSTS[code] = payload
+    }
     ROOMS[code] = ROOMS[code] ? ROOMS[code] : {}
     ROOMS[code][name] = ws
-    ws.name = payload.name
+    ws.data = payload
+    console.info("socket data is",ws.data)
     const chat = JSON.stringify({
         from: 'Server',
         message: `${name} has joined the room.`,
@@ -273,6 +278,9 @@ app.ws('/room', (ws, req) => {
         ROOMS[code][name].close()
         // remove ourself from the room
         delete ROOMS[code][name]
+        if (Object.keys(ROOMS[code]).length <= 0) {
+            delete ROOMS[code]
+        }
 
         const chat = JSON.stringify({
             from: 'Server',
@@ -281,6 +289,12 @@ app.ws('/room', (ws, req) => {
         })
         broadcastMsg(code, chat)
     })
+})
+
+app.get('/api/rooms', (req, resp) => {
+    resp.status(200)
+    resp.type('application/json')
+    resp.json({rooms:HOSTS})
 })
 
 // Resource not found

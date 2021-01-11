@@ -1,6 +1,10 @@
 <mat-card class="p-0 m-1" fxFlex fxLayout="column">
-    <mat-card-header>
-        <mat-card-title class="mt-1">Chat Room</mat-card-title>
+    <mat-card-header fxLayoutAlign="center">
+        <mat-card-title class="mt-1 text-center" fxLayout="column" fxLayoutAlign="center stretch">
+                Chat Room
+                <p>[{{roomDetails['room']}}]</p>
+                <button type="button" (click)="leaveRoom()" mat-raised-button color="accent"><p class="text-center">Leave room</p></button>
+        </mat-card-title>
     </mat-card-header>
     <mat-card-content class="ml-1 mr-1" fxFlex>
         <p *ngFor="let i of messages">

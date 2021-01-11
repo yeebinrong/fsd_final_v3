@@ -3,7 +3,7 @@
         <h1 class="text-center">{{message}}</h1>
         <button *ngIf="!creating && !joining" type="button" color="primary" (click)="createRoom()" mat-raised-button>Create room</button>
         <button *ngIf="!creating && !joining" type="button" color="warn" (click)="joinRoom()" class="mt-1" mat-raised-button>Join room</button>
-        <form *ngIf="creating" [formGroup]="form" fxLayout="column" class="mt-1">
+        <form *ngIf="creating && !joining" [formGroup]="form" fxLayout="column" class="mt-1">
             <mat-form-field appearance="outline"> <!-- Room name Input -->
                 <mat-label>Room</mat-label>
                 <input type="text" matInput formControlName="room" placeholder="Your room name.">
@@ -20,11 +20,27 @@
             <button type="button" color="primary" (click)="onSubmit()" [disabled]="form.invalid" mat-raised-button>Submit</button>
             <button type="button" class="mt-1" (click)="back()" mat-raised-button color="accent">Back</button>
         </form>
-        <div *ngIf="joining" fxLayout="column">
+        <div *ngIf="joining && !creating" fxLayout="column">
             <div fxLayout="row" fxLayoutAlign="center space-between">
                 <button type="button" fxFlex="80" (click)="refresh()" mat-raised-button color="primary">Refresh</button>
                 <span class="spacer"></span>
                 <button type="button" fxFlex="15" class="m1-1" (click)="back()" mat-raised-button color="accent">Back</button>
+            </div>
+            <div fxLayout="column">
+                <mat-card class="mt-1" fxLayoutAlign="row">
+                    <span>Room name</span>
+                    <span class="spacer"></span>
+                    <span>Host name</span>
+                </mat-card>
+                <mat-card *ngFor="let i of hosts" class="mt-1" fxLayoutAlign="row">
+                    <span>
+                        {{i['room']}}
+                    </span>
+                    <span class="spacer"></span>
+                    <span>
+                        {{i['name']}}
+                    </span>
+                </mat-card>
             </div>
         </div>
     </div>
