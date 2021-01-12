@@ -30,10 +30,13 @@ const {
 
 const { myReadFile, uploadToS3, unlinkAllFiles, insertCredentialsMongo, checkExistsMongo } = require('./db_utils.js')
 const { } = require('./helper.js')
+const { use } = require('passport')
 
 const ROOMS = { }
 const HOSTS = { }
 const USER_LOGGED_IN = []
+const USER_TO_SPLICE = {}
+const TIMER_TO_SPLICE = {}
 //#endregion
 
 
@@ -135,7 +138,6 @@ localStrategyAuth,
         resp.json({message:"Already logged in."})
         return
     }
-    console.info(req.user)
     resp.status(200)
     resp.type('application/json')
     resp.json({message: `Login at ${new Date()}`, token, user: req.user})
@@ -163,9 +165,6 @@ const CHECK_AND_ADD_USER = (user) => {
     const bool = USER_LOGGED_IN.find(u => {
         return u == user
     })
-    console.info("exists?",!!bool)
-    console.info(USER_LOGGED_IN)
-    console.info(user)
     if (!bool) {
         USER_LOGGED_IN.push(user)
     }
@@ -174,7 +173,49 @@ const CHECK_AND_ADD_USER = (user) => {
 
 app.post('/api/logout', (req, resp) => {
     const index = USER_LOGGED_IN.indexOf(req.body.name)
-    USER_LOGGED_IN.splice(index, 1)
+    if (index != -1) {
+        USER_LOGGED_IN.splice(index, 1)
+    }
+    resp.status(200)
+    resp.type('application/json')
+    resp.json({})
+})
+
+app.get('/api/user/startunload/:user', (req, resp) => {
+    const user = req.params.user
+    console.info("Starting unload")
+    const index = USER_LOGGED_IN.indexOf(user)
+    if (index != -1) {
+        console.info(`User :${user} set to true`)
+        USER_TO_SPLICE[user] = true 
+    }
+    console.info("Timeout started")
+    TIMER_TO_SPLICE[user] = setTimeout(() => {
+        console.info("Timeout started v2")
+        if (USER_TO_SPLICE[user] == true) {
+            console.info(`User ${user} spliced.`)
+            USER_LOGGED_IN.splice(index, 1)
+        }
+        console.info("Returning to application")
+        return
+    }, 1000)
+    resp.status(200)
+    resp.type('application/json')
+    resp.json({})
+})
+
+app.get('/api/user/stopunload/:user', (req, resp) => {
+    const user = req.params.user
+    console.info("Stop Timeout started")
+    if (USER_TO_SPLICE[user] == true) {
+        USER_TO_SPLICE[user] = false
+        delete USER_TO_SPLICE[user]
+        clearTimeout(TIMER_TO_SPLICE[user])
+        console.info("Stop Timeout stopped")
+    }
+    resp.status(200)
+    resp.type('application/json')
+    resp.json({})
 })
 
 // POST /api/register

@@ -69,12 +69,13 @@ export class AuthGuardService implements CanActivate {
   }
 
   startUnload() {
-    // this.http.get('/api/unload')
+    this.http.get(`/api/user/startunload/${this.user['name']}`).toPromise()
     console.info("unload")
   }
 
   stopUnload() {
     console.info("stop unload")
+    this.http.get(`/api/user/stopunload/${this.user['name']}`).toPromise()
   }
 
   logout() {
