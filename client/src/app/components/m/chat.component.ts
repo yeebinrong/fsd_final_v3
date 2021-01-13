@@ -26,8 +26,11 @@ export class ChatComponent implements OnInit {
   }
 
   onSubmit() {
-    const message = this.form.get('message').value
-    this.socketService.sendMessage(message)
+    const payload = {
+      message: this.form.get('message').value,
+      name: ''
+    }
+    this.socketService.sendMessage(payload)
     this.form.reset()
   }
 
@@ -39,6 +42,7 @@ export class ChatComponent implements OnInit {
   private createForm () {
     this.form = this.fb.group({
       message: this.fb.control('', [Validators.required]),
+      name: this.fb.control('')
     })
   }
 }

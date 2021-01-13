@@ -44,12 +44,24 @@
                     No rooms available!
                 </mat-card>
                 <ng-container *ngFor="let i of hosts">
-                    <mat-card mat-raised-button class="mt-1 hover" [routerLink]="['/main',i['code']]" fxLayoutAlign="row">
+                    <mat-card *ngIf="i['players'] <= 3" mat-raised-button class="mt-1 hover" [routerLink]="['/main',i['code']]" fxLayoutAlign="row">
                         <span fxFlex="80">
                             {{i['room']}}
                         </span>
                         <span fxFlex="10">
-                            4/4
+                            {{i['players']}}/4
+                        </span>
+                        <span class="spacer"></span>
+                        <span>
+                            {{i['name']}}
+                        </span>
+                    </mat-card>
+                    <mat-card *ngIf="i['players'] >= 4" class="background-grey" mat-raised-button class="mt-1" fxLayoutAlign="row">
+                        <span fxFlex="80">
+                            {{i['room']}}
+                        </span>
+                        <span fxFlex="10">
+                            {{i['players']}}/4
                         </span>
                         <span class="spacer"></span>
                         <span>

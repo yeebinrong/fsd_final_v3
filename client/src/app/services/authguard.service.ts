@@ -14,18 +14,23 @@ export class AuthGuardService implements CanActivate {
   constructor(private router:Router, private http:HttpClient, private auth:AuthService, private snackbar:MatSnackBar) {
     this.token = sessionStorage.getItem('token')
     this.user = JSON.parse(sessionStorage.getItem('user'))
+    const path = window.location.pathname.split('/')
     if (this.token == '' || this.token == null) {
-      this.router.navigate(['/login'])
+      if (!(path[1] == 'reset')) {
+        this.router.navigate(['/login'])
+      }
+    } else if(!!path[3]) {
+      this.router.navigate(['/main'])
     }
     this.$isLogin = new BehaviorSubject<boolean>(!!this.token)
     const isAuth = this.auth.isAuthenticated$.subscribe((bool) => {
       if (bool) {
         const idToken = this.auth.idTokenClaims$.subscribe(data => {
+          console.info(data)
           const payload = {
+            username: data.sub,
             name: data.nickname,
             email: data.email,
-            avatar: data.picture,
-            loginTime: data.updated_at
           }
           this.http.post<any>('/api/auth0-login', payload, {headers: {Authorization:`Bearer ${data.__raw}`}, observe: 'response'}).toPromise()
           .then(resp => {
@@ -36,6 +41,7 @@ export class AuthGuardService implements CanActivate {
             }          
           })
           .catch(e => {
+            snackbar.open("Login Error", "Close", {duration:3000})
             console.error(e.error.message)
           })
         })
@@ -69,13 +75,15 @@ export class AuthGuardService implements CanActivate {
   }
 
   startUnload() {
-    this.http.get(`/api/user/startunload/${this.user['name']}`).toPromise()
-    console.info("unload")
+    if (this.user && this.user != undefined) {
+      this.http.get(`/api/user/startunload/${this.user['name']}`).toPromise()
+    }
   }
 
   stopUnload() {
-    console.info("stop unload")
-    this.http.get(`/api/user/stopunload/${this.user['name']}`).toPromise()
+    if (this.user && this.user != undefined) {
+      this.http.get(`/api/user/stopunload/${this.user['name']}`).toPromise()
+    }
   }
 
   logout() {
@@ -102,6 +110,11 @@ export class AuthGuardService implements CanActivate {
     this.snackbar.open("Login successful!", "close", {duration:2000})
   }
 
+  setUser(user) {
+    this.user = user
+    sessionStorage.setItem('user', JSON.stringify(this.user))
+  }
+
   async checkToken():Promise<boolean> {
     try {
     return await this.http.get('api/check', {headers: {Authorization:`Bearer ${this.token}`}, observe: 'response'}).toPromise()
@@ -113,6 +126,17 @@ export class AuthGuardService implements CanActivate {
       console.error(e.error.message)
       this.logout()
     }
+  }
+
+  async verifyToken(token):Promise<boolean> {
+    return await this.http.get('api/check', {headers: {Authorization:`Bearer ${token}`}, observe: 'response'}).toPromise()
+    .then (resp => {
+      return (resp.status == 200)
+    })
+    .catch (e => {
+      console.error(e.error.message)
+      return false 
+    })
   }
 
   getProfile() {

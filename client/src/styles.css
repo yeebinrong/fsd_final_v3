@@ -39,6 +39,10 @@ button:disabled {
     width: 120px !important;
 }
 
+.click {
+    cursor: pointer;
+}
+
 /* MARGIN & PADDINGS */
 .m-0 {
     margin: 0 !important;

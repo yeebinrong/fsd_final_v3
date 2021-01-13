@@ -1,5 +1,6 @@
 import { HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs/internal/Subject';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,7 +13,7 @@ export class WebSocketService {
   private roomDetails;
   event = new Subject<ChatMessage>()
 
-  constructor(private authSvc:AuthGuardService, private router:Router) { }
+  constructor(private authSvc:AuthGuardService, private router:Router, private snackbar:MatSnackBar) { }
 
   setRoomDetails (values) {
     console.info("room details are",values)
@@ -44,7 +45,8 @@ export class WebSocketService {
       // password
       // code
       ...this.roomDetails,
-      name: user['name'] || user['username']
+      name:user['name'],
+      username:user['username']
     }
     console.info(payload)
     const params = new HttpParams().set('payload', JSON.stringify(payload))
@@ -61,25 +63,29 @@ export class WebSocketService {
 
     // handle errors
     this.ws.onclose = () => {
+      console.info("Close due to server")
       if (this.ws != null) {
-        console.info("Closing socket due to server error/closure.")
+        this.snackbar.open("Failed to join the room","Close",{duration:3000})
         this.ws.close()
         this.ws = null
+        this.router.navigate(['/main'])
       }
     }
   }
 
   leave() {
     if (this.ws != null) {
-      console.info("closing socket due to user leaving")
+      this.snackbar.open("You left the room","Close",{duration:3000})
       this.ws.close()
       this.ws= null
     }
     this.router.navigate(['/main'])
   }
 
-  sendMessage(message) {
-    console.info("sending message")
-    this.ws.send(message)
+  sendMessage(payload) {
+    const user = this.authSvc.getProfile()
+    payload.name = user['name']
+    console.info("sending message",payload)
+    this.ws.send(JSON.stringify(payload))
   }
 }

@@ -1,5 +1,24 @@
 <mat-card class="p-0 mt-1 mb-1 ml-1" fxFlex fxLayout="column" fxLayoutAlign=" center">
-    <img class="avatar mt-1 mb-1" src="../../../assets/images/placeholder_avatar.jpg" mat-card-avatar>
-    <h3>{{user.name}}</h3>
-    <h3>{{user.email}}</h3>
+    <div *ngIf="!isEditProfile" class="text-center">
+        <img class="avatar mt-1 mb-1" [src]="user.avatar || '../../../assets/images/placeholder_avatar.jpg'" mat-card-avatar>
+        <h3>{{user.name}}</h3>
+        <h3>{{user.email}}</h3>
+        <button type="button" color="accent" (click)="onEditProfile()" mat-raised-button>Edit Profile</button>
+    </div>
+    <div *ngIf="isEditProfile" class="text-center">
+        <div class="text-center">
+            <img class="avatar mt-1 mb-1" [src]="imageSrc || user.avatar || '../../../assets/images/placeholder_avatar.jpg'" mat-card-avatar>
+        </div>
+        <form [formGroup]="form" fxLayout="column" class="ml-1 mr-1 mb-1" (ngSubmit)="onSubmit()">
+            <label for="image_file">Upload Profile picture</label>
+            <input type="file" class="mb-1" accept="image/*" (change)="readURL($event);" id="image_file" formControlName="image_file">
+            <mat-form-field appearance="legacy">
+                <input type="text" matInput formControlName="name" placeholder="Your display name">
+            </mat-form-field>
+            <button type="submit" mat-raised-button color="accent" 
+                [disabled]="form.invalid || form.pristine">Save
+            </button>
+            <button type="button" class="mt-1" color="accent" (click)="onEditProfile()" mat-raised-button>Cancel</button>
+        </form>
+    </div>
 </mat-card>

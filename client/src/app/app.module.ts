@@ -22,6 +22,7 @@ import { ApiService } from './services/api.service';
 import { ProfileComponent } from './components/m/profile.component';
 import { GameComponent } from './components/m/game.component';
 import { ChatComponent } from './components/m/chat.component';
+import { GameService } from './services/game.service';
 
 @NgModule({
   declarations: [
@@ -48,7 +49,7 @@ import { ChatComponent } from './components/m/chat.component';
       clientId:'JSiQsFmldMnJizNk3s2Q796mwcoE40Vv'
     })
   ],
-  providers: [AuthGuardService, WebSocketService, ApiService],
+  providers: [AuthGuardService, WebSocketService, ApiService, GameService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

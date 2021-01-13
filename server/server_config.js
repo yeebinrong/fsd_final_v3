@@ -36,9 +36,10 @@ const s3 = new AWS.S3({
 })
 
 const ENV_PASSWORD = process.env.ENV_PASSWORD
-const AUTH0_JWKS_URI = process.env.AUTH0_JWKS_URI
-const AUTH0_ISSUER = process.env.AUTH0_ISSUER
+const AUTH0_JWKS_URI = global.env.AUTH0_JWKS_URI
+const AUTH0_ISSUER = global.env.AUTH0_ISSUER
 
+const EMAIL_USER = global.env.EMAIL_USER
 //#endregion
 
 
@@ -48,5 +49,5 @@ const AUTH0_ISSUER = process.env.AUTH0_ISSUER
 /* -------------------------------------------------------------------------- */
 
 module.exports = {
-    MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, MONGO_URL, AWS_ENDPOINT, s3, ENV_PASSWORD, AUTH0_ISSUER, AUTH0_JWKS_URI
+    MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, MONGO_URL, AWS_ENDPOINT, s3, ENV_PASSWORD, AUTH0_ISSUER, AUTH0_JWKS_URI, EMAIL_USER
 }

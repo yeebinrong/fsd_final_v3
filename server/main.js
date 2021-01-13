@@ -24,13 +24,13 @@ const multer = require('multer')
 const fs = require('fs')
 
 const { 
-    MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, MONGO_URL,
-    AWS_ENDPOINT, s3, ENV_PASSWORD, ENV_PORT, AUTH0_JWKS_URI, AUTH0_ISSUER
+    mongo, AWS_ENDPOINT, s3, ENV_PASSWORD, ENV_PORT
 } = require('./server_config.js')
 
-const { myReadFile, uploadToS3, unlinkAllFiles, insertCredentialsMongo, checkExistsMongo } = require('./db_utils.js')
+const { myReadFile, uploadToS3, unlinkAllFiles, insertCredentialsMongo, checkExistsMongo, upsertNameMongo, upsertAvatarMongo, updatePasswordMongo } = require('./db_utils.js')
 const { } = require('./helper.js')
-const { use } = require('passport')
+
+const { sendEmail } = require('./nodemailer.js')
 
 const ROOMS = { }
 const HOSTS = { }
@@ -82,13 +82,20 @@ const signToken = (payload) => {
         iss: 'myapp',
         iat: currTime,
         // exp: currTime + (30),
-        data: {
-            // avatar: req.user.avatar,
-            loginTime : payload.loginTime
-        }
     }, ENV_PASSWORD)
 }
   
+const signResetToken = (payload) => {
+    const currTime = (new Date()).getTime() / 1000
+    return  jwt.sign({
+        sub: payload.username,
+        email: payload.email,
+        iss: 'myapp',
+        iat: currTime,
+        exp: currTime + (360),
+    }, ENV_PASSWORD)
+}
+
 // Declare the port to run server on
 const PORT = parseInt(process.argv[2]) || parseInt(ENV_PORT) || 3000
 // Create an instance of express
@@ -115,10 +122,12 @@ const upload = multer({dest: `${__dirname}/uploads/`})
 /* -------------------------------------------------------------------------- */
 //#region 
 
+// disable cache
+app.disable('etag');
 // Log incoming requests using morgan
 app.use(morgan('tiny'))
 // Parse application/x-www-form-urlencoded
-app.use(express.urlencoded({extended:false}))
+app.use(express.urlencoded({extended: false}))
 // Parse application/json
 app.use(express.json())
 // initialise passport (must be done after parsing  json / urlencoded)
@@ -149,8 +158,22 @@ app.post('/api/auth0-login',
 checkJwt,
 (req, resp) => {
     console.info("body is",req.body)
-    const token = signToken(req.body)
-    if (CHECK_AND_ADD_USER(req.body.name)) {
+    let credentials = req.body
+    // check if user exists in g_user collection
+    console.info("credentials username is",credentials.username)
+    checkExistsMongo(credentials)
+    .then (data => {
+        console.info("data is",data)
+        if (!data.length <= 0) {
+            credentials = data
+            console.info("data is on mongo",credentials)
+        } else {
+            insertCredentialsMongo(credentials)
+            console.info("data is not on mongo inserting")
+        }
+    })
+    const token = signToken(credentials)
+    if (CHECK_AND_ADD_USER(credentials.name)) {
         resp.status(406)
         resp.type('application/json')
         resp.json({message:"Already logged in."})
@@ -158,7 +181,7 @@ checkJwt,
     }
     resp.status(200)
     resp.type("application/json")
-    resp.json({message: `Login at ${new Date()}`, token, user: req.body})
+    resp.json({message: `Login at ${new Date()}`, token, user: credentials})
 })
 
 const CHECK_AND_ADD_USER = (user) => {
@@ -171,7 +194,94 @@ const CHECK_AND_ADD_USER = (user) => {
     return bool
 }
 
-app.post('/api/logout', (req, resp) => {
+// Update display name
+app.post('/api/update',
+upload.single('image_file'),
+async (req, resp) => {
+    const payload = JSON.parse(req.body.payload)
+    try {
+        upsertNameMongo(payload)
+        .then (() => {
+            if (req.file) {
+                const filePath = req.file.path
+                console.info(req.body.payload)
+                myReadFile(filePath)
+                .then (buffer => {
+                    console.info("file read",buffer)
+                    uploadToS3(buffer, req)
+                    .then (key => {
+                        console.info("filed uploaded",key)
+                        unlinkAllFiles(`${__dirname}/uploads/`)
+                        payload.avatar = `https://myfsd2020app.fra1.digitaloceanspaces.com/${key}`
+                        upsertAvatarMongo(payload)
+                        checkExistsMongo(payload)
+                        .then ((user) => {
+                            console.info("user updated is",user)
+                            for (let i in HOSTS) {
+                                // update host name if user updated his name
+                                if (HOSTS[i].username = user[0].username) {
+                                    HOSTS[i].name = user[0].name
+                                    console.info("host change name")
+                                }
+                            }
+                            resp.status(200)
+                            resp.type('application/json')
+                            resp.json({message:"Profile saved!", user:user})
+                    })
+                }). catch(e => {
+                    console.info(e)
+                })
+            }) 
+            } else {
+                checkExistsMongo(payload)
+                .then ((user) => {
+                    console.info("user updated is",user)
+                    for (let i in HOSTS) {
+                        // update host name if user updated his name
+                        if (HOSTS[i].username = user[0].username) {
+                            HOSTS[i].name = user[0].name
+                            console.info("host change name")
+                        }
+                    }
+                    resp.status(200)
+                    resp.type('application/json')
+                    resp.json({message:"Profile saved!", user:user})
+                })
+            }
+        })
+    } catch (e) {
+        resp.status(400)
+        resp.type('application/json')
+        resp.json({message:e})
+    }
+})
+
+// Update password
+app.post('/api/updatepassword', async (req, resp) => {
+    const decoded = jwt.decode(req.body.token)
+    const payload = {
+        username:decoded.sub,
+        email:decoded.email,
+        password:sha256(req.body.password)
+    }
+    console.info(payload)
+    updatePasswordMongo(payload)
+    .then(() => {
+        console.info("password updated")
+        resp.status(200)
+        resp.type('application/json')
+        resp.json({message:"Password updated!"})
+    })
+    .catch (e => {
+        resp.status(409)
+        resp.type('application/json')
+        resp.json({message:e})
+    })
+})
+
+// Logout
+app.post('/api/logout', 
+(req, resp) => {
     const index = USER_LOGGED_IN.indexOf(req.body.name)
     if (index != -1) {
         USER_LOGGED_IN.splice(index, 1)
@@ -181,22 +291,17 @@ app.post('/api/logout', (req, resp) => {
     resp.json({})
 })
 
+// User has refreshed / closed the tab prepare to delete user from USER_LOGGED_IN
 app.get('/api/user/startunload/:user', (req, resp) => {
     const user = req.params.user
-    console.info("Starting unload")
     const index = USER_LOGGED_IN.indexOf(user)
     if (index != -1) {
-        console.info(`User :${user} set to true`)
         USER_TO_SPLICE[user] = true 
     }
-    console.info("Timeout started")
     TIMER_TO_SPLICE[user] = setTimeout(() => {
-        console.info("Timeout started v2")
         if (USER_TO_SPLICE[user] == true) {
-            console.info(`User ${user} spliced.`)
             USER_LOGGED_IN.splice(index, 1)
         }
-        console.info("Returning to application")
         return
     }, 1000)
     resp.status(200)
@@ -204,14 +309,13 @@ app.get('/api/user/startunload/:user', (req, resp) => {
     resp.json({})
 })
 
+// Confirm user executed a refresh and not a tab close, cleartimeout to delete user from USER_LOGGED_IN
 app.get('/api/user/stopunload/:user', (req, resp) => {
     const user = req.params.user
-    console.info("Stop Timeout started")
     if (USER_TO_SPLICE[user] == true) {
         USER_TO_SPLICE[user] = false
         delete USER_TO_SPLICE[user]
         clearTimeout(TIMER_TO_SPLICE[user])
-        console.info("Stop Timeout stopped")
     }
     resp.status(200)
     resp.type('application/json')
@@ -219,6 +323,7 @@ app.get('/api/user/stopunload/:user', (req, resp) => {
 })
 
 // POST /api/register
+// Create new local account
 app.post('/api/register', async (req, resp) => {
     const credentials = req.body
     // check if client has posted the credentials correctly
@@ -230,7 +335,7 @@ app.post('/api/register', async (req, resp) => {
     }
     credentials.password = sha256(credentials.password)
 
-    // check if username already exists    
+    // check if username already exists
     const exists = await checkExistsMongo(credentials)
     if (!exists.length <= 0) {
         resp.status(409)
@@ -252,8 +357,40 @@ app.post('/api/register', async (req, resp) => {
     }
 })
 
+// POST /api/reset
+// For user to reset password
+app.post('/api/reset', (req, resp) => {
+    console.info(req.body)
+    checkExistsMongo(req.body)
+    .then(data => {
+        if (!!data[0]) {
+            let token = signResetToken(data[0])
+            try {
+                token = token.split('.').join('-')
+                const url = `http://${req.get('host')}/reset/${token}`
+                sendEmail(req.body, url)
+                resp.status(200)
+                resp.type('application/json')
+                resp.json({})
+            } catch (e) {
+                console.info(e)
+                resp.status(403)
+                resp.type('application/json')
+                resp.json({message:"Error sending email " + e})
+            }
+        } else {
+            resp.status(403)
+            resp.type('application/json')
+            resp.json({message:"Username / email not found."})            
+            return        
+        }
+    })
+})
+
 // POST /api/upload
-app.post('/api/upload', upload.single('file'), async (req, resp) => {
+app.post('/api/upload', 
+upload.single('file'), 
+async (req, resp) => {
     // Parse the json string sent from client into json object
     const data = JSON.parse(req.body.data)
     console.info(req.file)
@@ -274,6 +411,7 @@ app.post('/api/upload', upload.single('file'), async (req, resp) => {
 })
 
 // POST /api/check
+// Check if token is valid
 app.get('/api/check', (req, resp, next) => {
     const auth = req.get('Authorization')
     if (null == auth) {
@@ -307,39 +445,52 @@ app.get('/api/check', (req, resp, next) => {
 
 const broadcastMsg = (code, chat) => {
     for (let i in ROOMS[code]) {
-        console.info("sending message")
+        console.info("message to send",chat)
         ROOMS[code][i].send(chat)
     }
 }
 
 // Websocket create / join a room
-app.ws('/room', (ws, req) => {
+app.ws('/room', 
+(ws, req) => {
     const payload = JSON.parse(req.query.payload)
     const name = payload.name == "server" ? "fake_server" : payload.name
+    const username = payload.username
     const code = payload.code
-    console.info("payload",payload)
     // need to create a room first or else [name] will have undefined error
     if (!ROOMS[code]) {
         // first time creating room 
         HOSTS[code] = payload
     }
+    HOSTS[code].players = HOSTS[code].players ? HOSTS[code].players + 1 : 1
+    // create a room[code] if not exist else [username] will have undefined room[code] error
     ROOMS[code] = ROOMS[code] ? ROOMS[code] : {}
-    ROOMS[code][name] = ws
+    ROOMS[code][username] = ws
     ws.data = payload
+
+    if (HOSTS[code].players >= 5) {
+        HOSTS[code].players = HOSTS[code].players - 1
+        ROOMS[code][username].close()
+        delete ROOMS[code][username]
+    }
+
     console.info("socket data is",ws.data)
-    const chat = JSON.stringify({
-        from: 'Server',
-        message: `${name} has joined the room.`,
-        ts: (new Date().toTimeString().split(' ')[0])
-    })
-    // broadcast to everyone in the room
-    broadcastMsg(code, chat)
-        
-    ws.on('message', (data) => {
-        console.info('Message incoming:',data)
+    
+    if (!!ROOMS[code][username]) {
         const chat = JSON.stringify({
-            from: name,
-            message: data,
+            from: 'Server',
+            message: `${name} has joined the room.`,
+            ts: (new Date().toTimeString().split(' ')[0])
+        })
+        // broadcast to everyone in the room if exists (need to have this else will throw error)
+        broadcastMsg(code, chat)
+    }
+        
+    ws.on('message', (string) => {
+        const data = JSON.parse(string)
+        const chat = JSON.stringify({
+            from: data.name,
+            message: data.message,
             ts: (new Date().toTimeString().split(' ')[0])
         })
         console.info(chat)
@@ -348,26 +499,31 @@ app.ws('/room', (ws, req) => {
     })
 
     ws.on('close', () => {
+        console.info("CLOSE 2")
         console.info(`Closing websocket connection for ${name}`)
         // close our end of connection
-        ROOMS[code][name].close()
-        // remove ourself from the room
-        delete ROOMS[code][name]
-        if (Object.keys(ROOMS[code]).length <= 0) {
-            delete ROOMS[code]
-            delete HOSTS[code]
+        if (!!ROOMS[code][username]) {
+            ROOMS[code][username].close()
+            // remove ourself from the room
+            HOSTS[code].players = HOSTS[code].players - 1
+            delete ROOMS[code][username]
+            if (Object.keys(ROOMS[code]).length <= 0) {
+                delete ROOMS[code]
+                delete HOSTS[code]
+            }
+    
+            const chat = JSON.stringify({
+                from: 'Server',
+                message: `${name} has left the room.`,
+                ts: (new Date().toTimeString().split(' ')[0])
+            })
+            broadcastMsg(code, chat)
         }
-
-        const chat = JSON.stringify({
-            from: 'Server',
-            message: `${name} has left the room.`,
-            ts: (new Date().toTimeString().split(' ')[0])
-        })
-        broadcastMsg(code, chat)
     })
 })
 
-app.get('/api/rooms', (req, resp) => {
+app.get('/api/rooms', 
+(req, resp) => {
     resp.status(200)
     resp.type('application/json')
     resp.json({rooms:HOSTS})

@@ -6,6 +6,7 @@ const { checkCredentialsMongo } = require('./db_utils.js')
 const sha256 = require('sha256')
 
 const LocalStrategy = require('passport-local').Strategy
+const { MONGO_COLLECTION } = require('./server_config.js')
 
 const localStrategy = new LocalStrategy(
     {
@@ -17,12 +18,14 @@ const localStrategy = new LocalStrategy(
         try {
             // perform the authentication
             password = sha256(password)
-            const data = await checkCredentialsMongo({username, password})
+            console.info(password)
+            const data = await checkCredentialsMongo({username, password}, MONGO_COLLECTION)
             if (data.length > 0) {
                 done(null,
                     // info about the user
                     {
-                        name: username,
+                        username: username,
+                        name: data[0].name || username,
                         email: data[0].email,
                         avatar: data[0].avatar
                         // retrieve match history

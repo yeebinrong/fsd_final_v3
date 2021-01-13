@@ -2,9 +2,11 @@
 //                      ######## MONGO / S3 METHODS ########
 /* -------------------------------------------------------------------------- */
 //#region 
+const fs = require('fs')
+const path = require('path')
 
 // Retrieve env variables
-const { MONGO_DB, MONGO_COLLECTION, MONGO_COLLECTION2, mongo, AWS_ENDPOINT, s3 } = require('./server_config.js')
+const { MONGO_DB, mongo, AWS_ENDPOINT, s3, MONGO_COLLECTION } = require('./server_config.js')
 
 // Reads the file using fs and returns the buffer as a promise
 const myReadFile = (file) => new Promise((resolve, reject) => {
@@ -19,9 +21,9 @@ const myReadFile = (file) => new Promise((resolve, reject) => {
 
 // Handles the uploading to AWS S3 and returns the key as a promise
 const uploadToS3 = (buffer, req) => new Promise((resolve, reject) => {
-    const key = req.file.filename + '_' + req.file.originalname;
+    const key = req.file.filename;
     const params = {
-        Bucket: 'paf2020',
+        Bucket: 'myfsd2020app',
         Key: key,
         Body: buffer,
         ACL: 'public-read',
@@ -68,7 +70,7 @@ const mkMongo = (QUERY) => {
 
 const MONGO_CHECK_USER_EXISTS = async (PARAMS) => {
     return await mongo.db(MONGO_DB).collection(MONGO_COLLECTION)
-    .find({username:PARAMS.username})
+    .find({username:PARAMS.username, email:PARAMS.email})
     .toArray()
 }
 
@@ -90,9 +92,48 @@ const MONGO_CHECK_CREDENTIALS = async (PARAMS) => {
     .toArray()
 }
 
+const MONGO_UPDATE_NAME = async (PARAMS) => {
+    return await mongo.db(MONGO_DB).collection(MONGO_COLLECTION)
+    .updateOne({
+        username:PARAMS.username},
+        {$set:{
+            name:PARAMS.updated
+            }   
+        },
+        {}
+    ).upsertedId
+}
+
+const MONGO_UPDATE_AVATAR = async (PARAMS) => {
+    return await mongo.db(MONGO_DB).collection(MONGO_COLLECTION)
+    .updateOne({
+        username:PARAMS.username},
+        {$set:{
+            avatar:PARAMS.avatar
+            }   
+        },
+        {}
+    ).upsertedId
+}
+
+const MONGO_UPDATE_PASSWORD = async (PARAMS) => {
+    return await mongo.db(MONGO_DB).collection(MONGO_COLLECTION)
+    .updateOne({
+        username:PARAMS.username, email:PARAMS.email},
+        {$set:{
+            password:PARAMS.password
+            }   
+        },
+        {}
+    ).upsertedId
+}
+
 const insertCredentialsMongo = mkMongo(MONGO_INSERT_CREDENTIALS)
 const checkExistsMongo = mkMongo(MONGO_CHECK_USER_EXISTS)
 const checkCredentialsMongo = mkMongo(MONGO_CHECK_CREDENTIALS)
+const upsertNameMongo = mkMongo(MONGO_UPDATE_NAME)
+const upsertAvatarMongo = mkMongo(MONGO_UPDATE_AVATAR)
+const updatePasswordMongo = mkMongo(MONGO_UPDATE_PASSWORD)
 
 //#endregion
 
@@ -103,5 +144,5 @@ const checkCredentialsMongo = mkMongo(MONGO_CHECK_CREDENTIALS)
 /* -------------------------------------------------------------------------- */
 
 module.exports = {
-    myReadFile, uploadToS3, unlinkAllFiles, checkExistsMongo, checkCredentialsMongo, insertCredentialsMongo
+    myReadFile, uploadToS3, unlinkAllFiles, checkExistsMongo, checkCredentialsMongo, insertCredentialsMongo, upsertNameMongo, updatePasswordMongo, upsertAvatarMongo
 }

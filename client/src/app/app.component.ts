@@ -21,9 +21,6 @@ export class AppComponent implements OnInit, OnDestroy {
     this.$isLogin = this.authSvc.isLogin()
       .subscribe(bool => {
         this.isLogin = bool
-        if (!this.isLogin) {
-          this.router.navigate(['/login'])
-        }
       })
   }
 
@@ -50,11 +47,12 @@ export class AppComponent implements OnInit, OnDestroy {
         window.localStorage['myUnloadEventFlag']=new Date().getTime();
     }
     // notify the server that we want to disconnect the user in a few seconds (I used 5 seconds)
-    // askServerToDisconnectUserInAFewSeconds(); // synchronous AJAX call
-    this.authSvc.startUnload()
+    if (this.isLogin) {
+      this.authSvc.startUnload()
+    }
   }
   myLoad() {
-    if (window.localStorage) {
+    if (window.localStorage && this.isLogin) {
         var t0 = Number(window.localStorage['myUnloadEventFlag']);
         if (isNaN(t0)) t0=0;
         var t1=new Date().getTime();

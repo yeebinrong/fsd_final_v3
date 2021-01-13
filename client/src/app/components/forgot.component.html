@@ -2,17 +2,45 @@
     <div fxFlex fxLayout="row" class="m-1" fxLayoutAlign="center stretch">
         <mat-card fxFlex="70" fxLayout="column" class="mb-1">
             <div class="m-1" fxLayout="row" fxLayoutAlign="center center">
-                <h1>Reset Password <em>or</em><span><button [routerLink]="['/']" class="ml-1" color="primary" mat-raised-button>Login</button></span></h1>
+                <h1>{{valid ? "Reset Password" : "Update Password"}} <em>or</em><span><button [routerLink]="['/']" class="ml-1" color="primary" mat-raised-button>Login</button></span></h1>
             </div>
-            <form [formGroup]="form" fxLayout="column">
+            <!-- <div class="m-1" fxLayout="row" fxLayoutAlign="center center">
+                <h1>Reset Password <em>or</em><span><button [routerLink]="['/']" class="ml-1" color="primary" mat-raised-button>Login</button></span></h1>
+            </div> -->
+            <form *ngIf="!token" [formGroup]="form" fxLayout="column">
                 <mat-form-field appearance="outline"> <!-- Username Input -->
+                    <mat-label>Username</mat-label>
+                    <input type="text" matInput formControlName="username" placeholder="Your username.">
+                    <mat-error>Please enter a username.</mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline"> <!-- Email Input -->
                     <mat-label>Email</mat-label>
                     <input type="email" matInput formControlName="email" placeholder="Your email.">
                     <mat-error>Please a valid email.</mat-error>
                 </mat-form-field>
-                <p class="error"><em>{{errorMessage}}</em></p>
                 <button type="button" (click)="onSubmit()" mat-raised-button color="accent" 
                     [disabled]="form.invalid">Reset
+                </button>
+            </form>
+            <form *ngIf="token" [formGroup]="form2" fxLayout="column">
+                <mat-form-field appearance="outline"> <!-- Password Input -->
+                    <mat-label>Password</mat-label>
+                    <input #password [type]="hide ? 'password' : 'text'" matInput formControlName="password" placeholder="Enter your password." autocomplete="off">
+                    <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
+                        <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+                    </button>
+                    <mat-error>Please enter your password.</mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline"> <!-- Confirm Input -->
+                    <mat-label>Confirm</mat-label>
+                    <input #confirm [type]="hide ? 'password' : 'text'" matInput formControlName="confirm" placeholder="Confirm your password." autocomplete="off">
+                    <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
+                        <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+                    </button>
+                    <mat-error>Please enter your password.</mat-error>
+                </mat-form-field>
+                <button type="button" (click)="updatePassword()" mat-raised-button color="accent" 
+                    [disabled]="form2.invalid || (password.value != confirm.value)">Update password
                 </button>
             </form>
         </mat-card>
