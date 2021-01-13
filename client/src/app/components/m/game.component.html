@@ -1,23 +1,23 @@
-<mat-card class="p-0 m-1" fxFlex> 
-    <div class="m-1" fxLayout="column">
-        <h1 class="text-center">{{message}}</h1>
+<mat-card class="p-0 m-1" fxFlex>
+    <div id="game" fxFill fxLayoutAlign="center center"></div>
+    <div class="m-1" *ngIf="!gameStarted" fxLayout="column">
+        <h1 *ngIf="!creating && !joining" class="text-center">{{message}}</h1>
         <button *ngIf="!creating && !joining" type="button" color="primary" (click)="createRoom()" mat-raised-button>Create room</button>
         <button *ngIf="!creating && !joining" type="button" color="warn" (click)="joinRoom()" class="mt-1" mat-raised-button>Join room</button>
         <form *ngIf="creating && !joining" [formGroup]="form" fxLayout="column" class="mt-1">
-            <mat-form-field appearance="outline"> <!-- Room name Input -->
+            <mat-form-field appearance="outline">
                 <mat-label>Room</mat-label>
                 <input type="text" matInput formControlName="room" placeholder="Your room name.">
                 <mat-error>Please enter your room name.</mat-error>
             </mat-form-field>
-            <!-- Password Input -->
-            <!-- <mat-form-field appearance="outline"> 
+            <mat-form-field appearance="outline"> 
                 <mat-label>[Optional] Password</mat-label>
                 <input [type]="hide ? 'password' : 'text'" matInput formControlName="password" placeholder="Your password." autocomplete="off">
                 <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
                     <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
                 </button>
                 <mat-error>Please enter your password.</mat-error>
-            </mat-form-field> -->
+            </mat-form-field>
             <button type="button" color="primary" (click)="onSubmit()" [disabled]="form.invalid" mat-raised-button>Submit</button>
             <button type="button" class="mt-1" (click)="back()" mat-raised-button color="accent">Back</button>
         </form>

@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { Injector, NgModule } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -23,6 +23,7 @@ import { ProfileComponent } from './components/m/profile.component';
 import { GameComponent } from './components/m/game.component';
 import { ChatComponent } from './components/m/chat.component';
 import { GameService } from './services/game.service';
+import { Globals } from './model';
 
 @NgModule({
   declarations: [
@@ -52,4 +53,8 @@ import { GameService } from './services/game.service';
   providers: [AuthGuardService, WebSocketService, ApiService, GameService],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+  constructor(injector: Injector) {
+		Globals.injector = injector
+	}
+}

@@ -20,6 +20,7 @@ export class GameComponent implements OnInit {
   hide:boolean
   message:string
   hosts:Host[] = []
+  gameStarted:boolean = true
 
   constructor(private fb:FormBuilder, private apiSvc:ApiService, private snackbar:MatSnackBar, private activatedRoute:ActivatedRoute, private authSvc:AuthGuardService, private router:Router, private socketService:WebSocketService) { }
   ngOnInit(): void {

@@ -2,6 +2,7 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
+import { GameService } from '../services/game.service';
 import { WebSocketService } from '../services/websocket.service';
 
 @Component({
@@ -11,18 +12,17 @@ import { WebSocketService } from '../services/websocket.service';
 })
 export class MainComponent implements OnInit {
   code:string = ''
-  constructor(private router:Router, private snackBar:MatSnackBar, private activatedRoute:ActivatedRoute, private socketService:WebSocketService) { }
+  constructor(private router:Router, private snackBar:MatSnackBar, private activatedRoute:ActivatedRoute, private socketService:WebSocketService, private gameSvc:GameService) { }
 
   ngOnInit(): void {
     this.code = this.activatedRoute.snapshot.params.code
     if (this.code) {
-      console.info("code is true")
       if ((/[^a-zA-Z0-9]/.test(this.code)) || this.code.length != 5) {
           this.router.navigate(['/main'])
           this.snackBar.open("Invalid Room code.", "Close", {duration: 4000})
       } else {
-        console.info(this.code)
         this.socketService.createRoom(this.code)
+        this.gameSvc.createGame()
       }
     }
   }
