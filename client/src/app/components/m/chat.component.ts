@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { BaseMessage } from 'src/app/messages';
 import { ChatMessage } from 'src/app/model';
 import { WebSocketService } from 'src/app/services/websocket.service';
 
@@ -12,7 +13,7 @@ import { WebSocketService } from 'src/app/services/websocket.service';
 export class ChatComponent implements OnInit {
   form:FormGroup
   event$:Subscription
-  messages:ChatMessage[] = []
+  messages:BaseMessage[] = []
   roomDetails = {}
 
   constructor(private fb:FormBuilder, private socketService:WebSocketService) { }
@@ -20,7 +21,9 @@ export class ChatComponent implements OnInit {
   ngOnInit(): void {
     this.createForm()
     this.event$ = this.socketService.event.subscribe(chat => {
-      this.messages.unshift(chat)
+      if (!chat.type) {
+        this.messages.unshift(chat)
+      }
     })
     this.roomDetails = this.socketService.getRoomDetails()
   }

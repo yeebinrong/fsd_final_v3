@@ -1,5 +1,4 @@
 <mat-card class="p-0 m-1" fxFlex>
-    <div id="game" fxFill fxLayoutAlign="center center"></div>
     <div class="m-1" *ngIf="!gameStarted" fxLayout="column">
         <h1 *ngIf="!creating && !joining" class="text-center">{{message}}</h1>
         <button *ngIf="!creating && !joining" type="button" color="primary" (click)="createRoom()" mat-raised-button>Create room</button>
@@ -72,4 +71,5 @@
             </div>
         </div>
     </div>
+    <div id="game" fxFill fxLayoutAlign="center center"></div>
 </mat-card>

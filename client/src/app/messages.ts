@@ -37,6 +37,5 @@ export interface RequestMovementMessage extends BaseMessage {
 
 export interface PlayerMovedMessage extends BaseMessage {
   player: number
-  from: { x: number; y: number },
-  to: { x: number; y: number }
+  key: string
 }

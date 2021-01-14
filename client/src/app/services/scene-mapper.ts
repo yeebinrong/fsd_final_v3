@@ -8,12 +8,15 @@ export interface SceneMapperConfig {
 
 export class ScreenMapper {
 
-  private gridWidth = 0
-  private gridHeight = 0
-  private halfGridWidth = 0
-  private halfGridHeight = 0
-  private scrWidth = 0
-  private scrHeight = 0
+  gridWidth = 0
+  gridHeight = 0
+  halfGridWidth = 0
+  halfGridHeight = 0
+  scrWidth = 0
+  scrHeight = 0
+
+  items;
+  fires;
 
   constructor(private config: SceneMapperConfig) {
     this.scrWidth = this.config.scene.game.config.width as number
@@ -22,6 +25,8 @@ export class ScreenMapper {
     this.gridHeight = Math.floor(this.scrHeight / this.config.rows)
     this.halfGridWidth = Math.floor(this.gridWidth / 2)
     this.halfGridHeight = Math.floor(this.gridHeight / 2)
+    this.items = []
+    this.fires = []
   }
 
   placeObjectAt(x, y, obj: any) {
@@ -70,6 +75,69 @@ export class ScreenMapper {
     )
     this.placeObjectAt(x, y, text)
     return text
+  }
+
+  screenToGrid(x, y, point?) {
+    if (point) {
+      point.x = x / this.gridWidth
+      point.y = y / this.gridHeight
+      return point;
+    }
+      return new Phaser.Geom.Point(Math.round(x / this.gridWidth), Math.round(y / this.gridHeight));
+  }
+
+  gridToScreen(x, y, point) {
+    if (point) {
+      point.x = x * this.gridWidth;
+      point.y = y * this.gridWidth;
+      return point;
+    }
+    return new Phaser.Geom.Point(x * this.gridWidth, y * this.gridHeight);
+  }
+
+  add(item) {
+    item.gridPos = this.screenToGrid(item.x - 1, item.y - 1);
+    this.items.push(item);
+  }
+  addFire(fire) {
+    fire.gridPos = this.screenToGrid(fire.x - 1, fire.y - 1);
+    this.fires.push(fire);
+  }
+s
+  remove(item) {
+    if (this.items.indexOf(item) !== -1) {
+      this.items.splice(this.items.indexOf(item), 1);
+    }
+  }
+  removeFire(fire) {
+    if (this.fires.indexOf(fire) !== -1) {
+      this.fires.splice(this.fires.indexOf(fire), 1);
+    }
+  }
+
+  getAt(x, y, ignore) {
+    if (x >= 0 && x < this.config.columns&& y >= 0 && y < this.config.rows) {
+      for (let i = 0; i < this.items.length; i++) {
+        let item = this.items[i];
+        if (item !== ignore && item.gridPos.x === x && item.gridPos.y === y) {
+          return item;
+        }
+      }
+      return null;
+    }
+    return -1;
+  }
+  getFireAt(x, y, ignore) {
+    if (x >= 0 && x < this.config.columns&& y >= 0 && y < this.config.rows) {
+      for (let i = 0; i < this.fires.length; i++) {
+        let fire = this.fires[i];
+        if (fire !== ignore && fire.gridPos.x === x && fire.gridPos.y === y) {
+          return fire;
+        }
+      }
+      return null;
+    }
+    return -1;
   }
 
   // helping with object placement

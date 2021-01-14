@@ -37,6 +37,10 @@ const HOSTS = { }
 const USER_LOGGED_IN = []
 const USER_TO_SPLICE = {}
 const TIMER_TO_SPLICE = {}
+const TO_SEND = []
+const BACKGROUND = {}
+
+
 //#endregion
 
 
@@ -445,7 +449,7 @@ app.get('/api/check', (req, resp, next) => {
 
 const broadcastMsg = (code, chat) => {
     for (let i in ROOMS[code]) {
-        console.info("message to send",chat)
+        console.info(`message to sending to ${i}`,chat)
         ROOMS[code][i].send(chat)
     }
 }
@@ -461,12 +465,53 @@ app.ws('/room',
     if (!ROOMS[code]) {
         // first time creating room 
         HOSTS[code] = payload
+        if (!BACKGROUND[code]) {
+            for (let x = 0; x <= 17; x++) {
+                for (let y = 0; y <= 13; y++) {
+                    if (x ==  0 || x == 16 || y == 0 || y == 12) {
+                    }
+                    else if ((x >= 0.1 && x < 17 && !(x%2) && (y > 0 && y < 11  && !(y%2)))) {
+                    }
+                    else if (x > 0 && x < 17 && y > 0 && y <= 13 && Math.random() > 0.25 && !(x == 1 && y == 1) && !(x == 15 && y == 11) && !(x == 15 && y == 1) && !(x == 1 && y == 11) && !(x == 1 && y == 2) && !(x == 2 && y == 1) && !(x == 14 && y == 11) && !(x == 14 && y == 1) && !(x == 2 && y == 11) && !(x == 15 && y == 10) && !(x == 15 && y == 2) && !(x == 1 && y == 10)) {
+                        const px = "x" + x
+                        const py = "y" + y
+                        if (!BACKGROUND[code]) {
+                            BACKGROUND[code] = {}
+                        }
+                        if (!BACKGROUND[code][px]) {
+                            BACKGROUND[code][px] = {}
+                        }
+                        BACKGROUND[code][px][py] = 'bricks'
+                    }
+                }
+            }
+        }
+        console.info(BACKGROUND[code])
     }
     HOSTS[code].players = HOSTS[code].players ? HOSTS[code].players + 1 : 1
     // create a room[code] if not exist else [username] will have undefined room[code] error
     ROOMS[code] = ROOMS[code] ? ROOMS[code] : {}
-    ROOMS[code][username] = ws
     ws.data = payload
+    const id = HOSTS[code].players
+    ws.data.players = id
+    ROOMS[code][username] = ws
+    try {
+        if (ws.data.players == 1) {
+            ws.data.x = 1
+            ws.data.y = 0.8
+        } else if (ws.data.players == 2) {
+            ws.data.x = 15
+            ws.data.y = 0.8
+        } else if (ws.data.players == 3) {
+            ws.data.x = 1
+            ws.data.y = 10.8
+        } else if (ws.data.players == 4) {
+            ws.data.x = 15
+            ws.data.y = 10.8
+        } 
+    } catch (e) {
+        console.info(e)
+    }
 
     if (HOSTS[code].players >= 5) {
         HOSTS[code].players = HOSTS[code].players - 1
@@ -474,28 +519,49 @@ app.ws('/room',
         delete ROOMS[code][username]
     }
 
-    console.info("socket data is",ws.data)
-    
+    // console.info("socket data is",ws.data)
+
+    // broadcast to everyone in the room if exists (need to have this else will throw error)
     if (!!ROOMS[code][username]) {
         const chat = JSON.stringify({
             from: 'Server',
             message: `${name} has joined the room.`,
             ts: (new Date().toTimeString().split(' ')[0])
         })
-        // broadcast to everyone in the room if exists (need to have this else will throw error)
-        broadcastMsg(code, chat)
-    }
-        
-    ws.on('message', (string) => {
-        const data = JSON.parse(string)
-        const chat = JSON.stringify({
-            from: data.name,
-            message: data.message,
-            ts: (new Date().toTimeString().split(' ')[0])
+        const chat2 = JSON.stringify({
+            type: 'player-location',
+            player: ROOMS[code][username].data.players,
+            x: ROOMS[code][username].data.x,
+            y: ROOMS[code][username].data.y,
         })
-        console.info(chat)
-        // broadcast to everyone in the room
         broadcastMsg(code, chat)
+        broadcastMsg(code, chat2)
+    }
+
+
+    const chat = JSON.stringify({
+        type: 'player-location',
+        player: ROOMS[code][username].data.players,
+        x:  ROOMS[code][username].data.x,
+        y:  ROOMS[code][username].data.y,
+        ts: (new Date().toTimeString().split(' ')[0])
+    })
+    console.info(TO_SEND)
+    for (let q of TO_SEND) {
+        console.info(q)
+        ROOMS[code][username].send(q)
+        console.info("sending")
+    }
+    TO_SEND.push(chat)
+
+    const chat2 = JSON.stringify({
+        type: 'generate_rock',
+        tiles: BACKGROUND[code]
+    })
+    ROOMS[code][username].send(chat2)
+
+    ws.on('message', (string) => {
+        processMessage(string, code, ROOMS[code][username], ROOMS[code])
     })
 
     ws.on('close', () => {
@@ -592,3 +658,87 @@ Promise.all([checkMongo(), checkAWS()])
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
+
+const processMessage = (payload, code, player, players) => {
+	const msg = JSON.parse(payload)
+	console.info('Recevied: ', msg)
+	let resp;
+	switch (msg.type) {
+        case 'chatting':
+            const chat = JSON.stringify({
+                from: msg.name,
+                message: msg.message,
+                ts: (new Date().toTimeString().split(' ')[0])
+            })
+            // broadcast to everyone in the room
+            broadcastMsg(code, chat)
+            break;
+		case 'get-player-location':
+			const charId = msg.player
+			var player = players.find(p => p.charId == charId)
+			// assume no error, construct the response message
+			resp = {
+				type: 'player-location',
+				player: charId,
+				x: player.x,
+				y: player.y,
+			}
+			player.ws.send(JSON.stringify(resp))
+			break;
+
+        case 'get-all-player-locations':
+			var player = players.find(p => p.charId == msg.player)
+			resp = { type: 'all-player-locations' }
+			resp.players = players.map(
+				v => ({
+					type: 'player-location',
+					player: v.charId,
+					x: v.x, y: v.y
+				})
+			)
+			player.ws.send(JSON.stringify(resp))
+			break;
+
+		case 'request-movement':		
+			// const origX = player.data.x
+            // const origY = player.data.y
+            // console.info(player.data)
+            // switch (msg.key.toLowerCase()) {
+			// 	case 'arrowup':
+			// 		break;
+
+			// 	case 'arrowdown':
+			// 		finalY = (finalY + 1) % 10
+			// 		break;
+
+			// 	case 'arrowleft':
+			// 		finalX = (finalX - 1) < 0? 9: (finalX - 1)
+			// 		break;
+
+			// 	case 'arrowright':
+			// 		finalX = (finalX + 1) % 10
+			// 		break;
+				
+			// 	default:
+			// 		return
+			// }
+			// let finalX = msg.direction.x
+			// let finalY = msg.direction.y
+			
+            // player.data.x = msg.direction.x
+            // player.data.y = msg.direction.y
+
+			resp = JSON.stringify({
+				type: 'player-moved',
+                player: msg.player,
+				key: msg.key
+			})
+			for (let i in players)
+				players[i].send(resp)
+
+			break;
+
+		default:
+			// ignore message type that we don't understand
+	}
+}
