@@ -101,7 +101,7 @@ const signResetToken = (payload) => {
 }
 
 // Declare the port to run server on
-const PORT = parseInt(process.argv[2]) || parseInt(ENV_PORT) || 3000
+const PORT = parseInt(process.argv[2]) || parseInt(process.env.PORT) || 3000
 // Create an instance of express
 const app = express()
 // Create an instance for express ws
