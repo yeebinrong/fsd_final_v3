@@ -17,11 +17,7 @@ const MONGO_DB = global.env.MONGO_DB
 const MONGO_DBNAME = global.env.MONGO_DBNAME
 const MONGO_COLLECTION = global.env.MONGO_COLLECTION
 const MONGO_COLLECTION2 = global.env.MONGO_COLLECTION2
-// const MONGO_URL = global.env.MONGO_URL
-// const MONGO_URL = 'mongodb://localhost:27017'
-// const MONGO_URL = `mongodb://${MONGO_USER}:${MONGO_PASS}@localhost:27017/${MONGO_DB}`
 const MONGO_URL = `mongodb+srv://bin:${MONGO_PASS}@cluster0.uagd3.mongodb.net/${MONGO_DB}?retryWrites=true&w=majority`
-// const MONGO_URL = 'mongodb+srv://bin:97517362@cluster0.uagd3.mongodb.net/fsd2020?retryWrites=true&w=majority'
 
 
 // MONGO CONFIUGRAIONS

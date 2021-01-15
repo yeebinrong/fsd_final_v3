@@ -8,11 +8,11 @@ export class ApiService {
   constructor(private http:HttpClient) { }
 
   createAccount(values):Promise<any> {
-    return this.http.post('/api/register', values).toPromise()
+    return this.http.post('https://mybomb.herokuapp.com/api/register', values).toPromise()
   }
 
   getHosts() {
-    return this.http.get<any>('/api/rooms').toPromise()
+    return this.http.get<any>('https://mybomb.herokuapp.com/api/rooms').toPromise()
     .then(data => {
       let array = []
       for (let i in data['rooms']) {
@@ -26,7 +26,7 @@ export class ApiService {
     const formData:FormData = new FormData()
     formData.set('payload', JSON.stringify(payload))
     formData.set('image_file', (<HTMLInputElement>document.getElementById("image_file")).files[0])
-    return this.http.post('/api/update', formData)
+    return this.http.post('https://mybomb.herokuapp.com/api/update', formData)
     .pipe(take(1)).toPromise()
       .then ((result) => {
         console.info(result)
@@ -39,7 +39,7 @@ export class ApiService {
 
   resetPassword(payload):Promise<boolean> {
     console.info(payload)
-    return this.http.post('/api/reset', payload, {observe:'response'}).toPromise()
+    return this.http.post('https://mybomb.herokuapp.com/api/reset', payload, {observe:'response'}).toPromise()
     .then (resp => {
       return (resp.status == 200)
     })
@@ -47,7 +47,7 @@ export class ApiService {
 
   updatePassword(payload) {
     console.info(payload)
-    return this.http.post('/api/updatepassword', payload, {observe:'response'}).toPromise()
+    return this.http.post('https://mybomb.herokuapp.com/api/updatepassword', payload, {observe:'response'}).toPromise()
     .then (resp => {
       return (resp.status == 200)
     })

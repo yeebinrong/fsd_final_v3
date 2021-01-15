@@ -181,10 +181,12 @@ export class MainScene extends Scene {
                 else if (x > 0 && x < 17 && y > 0 && y <= 13 && !(x == 1 && y == 1) && !(x == 15 && y == 11) && !(x == 15 && y == 1) && !(x == 1 && y == 11) && !(x == 1 && y == 2) && !(x == 2 && y == 1) && !(x == 14 && y == 11) && !(x == 14 && y == 1) && !(x == 2 && y == 11) && !(x == 15 && y == 10) && !(x == 15 && y == 2) && !(x == 1 && y == 10)) {
                     const px = "x" + x
                     const py = "y" + y
-                    if (this.background[px][py] == "bricks") {
-                        console.info("true")
-                          const bricks = new Bricks(this, x , y , this.screenMap);
-                          this.screenMap.add(bricks.me);
+                    if (this.background[px]) {
+                        if (this.background[px][py] == "bricks") {
+                            console.info("true")
+                              const bricks = new Bricks(this, x , y , this.screenMap);
+                              this.screenMap.add(bricks.me);
+                        }
                     }
                 }
             }
