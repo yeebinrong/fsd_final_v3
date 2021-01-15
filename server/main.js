@@ -139,6 +139,8 @@ app.use(passport.initialize())
 // Apply cors headers to resp
 app.use(cors())
 
+app.use(express.static(`${__dirname}/dist/client`))
+
 // POST /api/login
 app.post('/api/login',
 // passport middleware to perform authentication
