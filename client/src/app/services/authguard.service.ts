@@ -32,7 +32,7 @@ export class AuthGuardService implements CanActivate {
             name: data.nickname,
             email: data.email,
           }
-          this.http.post<any>('https://mybomb.herokuapp.com/api/auth0-login', payload, {headers: {Authorization:`Bearer ${data.__raw}`}, observe: 'response'}).toPromise()
+          this.http.post<any>('/api/auth0-login', payload, {headers: {Authorization:`Bearer ${data.__raw}`}, observe: 'response'}).toPromise()
           .then(resp => {
             if (resp.status == 200) {
               this.setToken(resp)
@@ -56,7 +56,7 @@ export class AuthGuardService implements CanActivate {
   login(credentials):Promise<string> {
     this.token = ''
     this.user = {}
-    return this.http.post<any>('https://mybomb.herokuapp.com/api/login', credentials, {observe: 'response'}).toPromise()
+    return this.http.post<any>('/api/login', credentials, {observe: 'response'}).toPromise()
     .then(resp => {
       if (resp.status == 200) {
         this.setToken(resp)
@@ -76,18 +76,18 @@ export class AuthGuardService implements CanActivate {
 
   startUnload() {
     if (this.user && this.user != undefined) {
-      this.http.get(`https://mybomb.herokuapp.com/api/user/startunload/${this.user['name']}`).toPromise()
+      this.http.get(`/api/user/startunload/${this.user['name']}`).toPromise()
     }
   }
 
   stopUnload() {
     if (this.user && this.user != undefined) {
-      this.http.get(`https://mybomb.herokuapp.com/api/user/stopunload/${this.user['name']}`).toPromise()
+      this.http.get(`/api/user/stopunload/${this.user['name']}`).toPromise()
     }
   }
 
   logout() {
-    this.http.post('https://mybomb.herokuapp.com/api/logout', this.user).toPromise()
+    this.http.post('/api/logout', this.user).toPromise()
     this.token = ''
     sessionStorage.removeItem('token')
     this.user = {}
@@ -117,7 +117,7 @@ export class AuthGuardService implements CanActivate {
 
   async checkToken():Promise<boolean> {
     try {
-    return await this.http.get('https://mybomb.herokuapp.com/api/check', {headers: {Authorization:`Bearer ${this.token}`}, observe: 'response'}).toPromise()
+    return await this.http.get('/api/check', {headers: {Authorization:`Bearer ${this.token}`}, observe: 'response'}).toPromise()
       .then(resp => {
         return (resp.status == 200) 
       })
@@ -129,7 +129,7 @@ export class AuthGuardService implements CanActivate {
   }
 
   async verifyToken(token):Promise<boolean> {
-    return await this.http.get('https://mybomb.herokuapp.com/api/check', {headers: {Authorization:`Bearer ${token}`}, observe: 'response'}).toPromise()
+    return await this.http.get('/api/check', {headers: {Authorization:`Bearer ${token}`}, observe: 'response'}).toPromise()
     .then (resp => {
       return (resp.status == 200)
     })

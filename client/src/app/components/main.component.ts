@@ -21,7 +21,7 @@ export class MainComponent implements OnInit {
           this.snackBar.open("Invalid Room code.", "Close", {duration: 4000})
       } else {
         this.socketService.createRoom(this.code)
-        this.socketService.createGame()
+        // this.socketService.createGame()
       }
     }
   }

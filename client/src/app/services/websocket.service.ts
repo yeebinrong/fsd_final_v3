@@ -72,7 +72,9 @@ export class WebSocketService {
     console.info(payload)
     const params = new HttpParams().set('payload', JSON.stringify(payload))
     console.info(params)
-    this.ws = new WebSocket(`wss://mybomb.herokuapp.com/room?${params.toString()}`)
+    // this.ws = new WebSocket(`wss://fsd2020-1.herokuapp.com/room?${params.toString()}`)
+    this.ws = new WebSocket(`ws://localhost:3000/room?${params.toString()}`)
+
 
     // handle incoming message
     this.ws.onmessage = (payload: MessageEvent) => {

@@ -299,17 +299,18 @@ app.post('/api/logout',
 
 // User has refreshed / closed the tab prepare to delete user from USER_LOGGED_IN
 app.get('/api/user/startunload/:user', (req, resp) => {
-    const user = req.params.user
-    const index = USER_LOGGED_IN.indexOf(user)
-    if (index != -1) {
-        USER_TO_SPLICE[user] = true 
-    }
-    TIMER_TO_SPLICE[user] = setTimeout(() => {
-        if (USER_TO_SPLICE[user] == true) {
-            USER_LOGGED_IN.splice(index, 1)
-        }
-        return
-    }, 1000)
+    console.info("unloading")
+    // const user = req.params.user
+    // const index = USER_LOGGED_IN.indexOf(user)
+    // if (index != -1) {
+    //     USER_TO_SPLICE[user] = true 
+    //     TIMER_TO_SPLICE[user] = setTimeout(() => {
+    //         if (USER_TO_SPLICE[user] == true) {
+    //             USER_LOGGED_IN.splice(index, 1)
+    //         }
+    //         return
+    //     }, 5000)
+    // }
     resp.status(200)
     resp.type('application/json')
     resp.json({})
@@ -318,11 +319,13 @@ app.get('/api/user/startunload/:user', (req, resp) => {
 // Confirm user executed a refresh and not a tab close, cleartimeout to delete user from USER_LOGGED_IN
 app.get('/api/user/stopunload/:user', (req, resp) => {
     const user = req.params.user
-    if (USER_TO_SPLICE[user] == true) {
-        USER_TO_SPLICE[user] = false
-        delete USER_TO_SPLICE[user]
-        clearTimeout(TIMER_TO_SPLICE[user])
-    }
+    console.info("stop unloading")
+    // if (USER_TO_SPLICE[user] == true) {
+    //     USER_TO_SPLICE[user] = false
+    //     delete USER_TO_SPLICE[user]
+    //     delete USER_LOGGED_IN[user]
+    //     clearTimeout(TIMER_TO_SPLICE[user])
+    // }
     resp.status(200)
     resp.type('application/json')
     resp.json({})
@@ -373,7 +376,7 @@ app.post('/api/reset', (req, resp) => {
             let token = signResetToken(data[0])
             try {
                 token = token.split('.').join('-')
-                const url = `http://${req.get('host')}/reset/${token}`
+                const url = `http://${req.get('host')}/#/reset/${token}`
                 sendEmail(req.body, url)
                 resp.status(200)
                 resp.type('application/json')
@@ -459,6 +462,7 @@ const broadcastMsg = (code, chat) => {
 // Websocket create / join a room
 app.ws('/room', 
 (ws, req) => {
+    console.info("Incoming websocket...", req)
     const payload = JSON.parse(req.query.payload)
     const name = payload.name == "server" ? "fake_server" : payload.name
     const username = payload.username
@@ -467,28 +471,28 @@ app.ws('/room',
     if (!ROOMS[code]) {
         // first time creating room 
         HOSTS[code] = payload
-        if (!BACKGROUND[code]) {
-            for (let x = 0; x <= 17; x++) {
-                for (let y = 0; y <= 13; y++) {
-                    if (x ==  0 || x == 16 || y == 0 || y == 12) {
-                    }
-                    else if ((x >= 0.1 && x < 17 && !(x%2) && (y > 0 && y < 11  && !(y%2)))) {
-                    }
-                    else if (x > 0 && x < 17 && y > 0 && y <= 13 && Math.random() > 0.25 && !(x == 1 && y == 1) && !(x == 15 && y == 11) && !(x == 15 && y == 1) && !(x == 1 && y == 11) && !(x == 1 && y == 2) && !(x == 2 && y == 1) && !(x == 14 && y == 11) && !(x == 14 && y == 1) && !(x == 2 && y == 11) && !(x == 15 && y == 10) && !(x == 15 && y == 2) && !(x == 1 && y == 10)) {
-                        const px = "x" + x
-                        const py = "y" + y
-                        if (!BACKGROUND[code]) {
-                            BACKGROUND[code] = {}
-                        }
-                        if (!BACKGROUND[code][px]) {
-                            BACKGROUND[code][px] = {}
-                        }
-                        BACKGROUND[code][px][py] = 'bricks'
-                    }
-                }
-            }
-        }
-        console.info(BACKGROUND[code])
+        // if (!BACKGROUND[code]) {
+        //     for (let x = 0; x <= 17; x++) {
+        //         for (let y = 0; y <= 13; y++) {
+        //             if (x ==  0 || x == 16 || y == 0 || y == 12) {
+        //             }
+        //             else if ((x >= 0.1 && x < 17 && !(x%2) && (y > 0 && y < 11  && !(y%2)))) {
+        //             }
+        //             else if (x > 0 && x < 17 && y > 0 && y <= 13 && Math.random() > 0.25 && !(x == 1 && y == 1) && !(x == 15 && y == 11) && !(x == 15 && y == 1) && !(x == 1 && y == 11) && !(x == 1 && y == 2) && !(x == 2 && y == 1) && !(x == 14 && y == 11) && !(x == 14 && y == 1) && !(x == 2 && y == 11) && !(x == 15 && y == 10) && !(x == 15 && y == 2) && !(x == 1 && y == 10)) {
+        //                 const px = "x" + x
+        //                 const py = "y" + y
+        //                 if (!BACKGROUND[code]) {
+        //                     BACKGROUND[code] = {}
+        //                 }
+        //                 if (!BACKGROUND[code][px]) {
+        //                     BACKGROUND[code][px] = {}
+        //                 }
+        //                 BACKGROUND[code][px][py] = 'bricks'
+        //             }
+        //         }
+        //     }
+        // }
+        // console.info(BACKGROUND[code])
     }
     HOSTS[code].players = HOSTS[code].players ? HOSTS[code].players + 1 : 1
     // create a room[code] if not exist else [username] will have undefined room[code] error
@@ -675,72 +679,72 @@ const processMessage = (payload, code, player, players) => {
             // broadcast to everyone in the room
             broadcastMsg(code, chat)
             break;
-		case 'get-player-location':
-			const charId = msg.player
-			var player = players.find(p => p.charId == charId)
-			// assume no error, construct the response message
-			resp = {
-				type: 'player-location',
-				player: charId,
-				x: player.x,
-				y: player.y,
-			}
-			player.ws.send(JSON.stringify(resp))
-			break;
+		// case 'get-player-location':
+		// 	const charId = msg.player
+		// 	var player = players.find(p => p.charId == charId)
+		// 	// assume no error, construct the response message
+		// 	resp = {
+		// 		type: 'player-location',
+		// 		player: charId,
+		// 		x: player.x,
+		// 		y: player.y,
+		// 	}
+		// 	player.ws.send(JSON.stringify(resp))
+		// 	break;
 
-        case 'get-all-player-locations':
-			var player = players.find(p => p.charId == msg.player)
-			resp = { type: 'all-player-locations' }
-			resp.players = players.map(
-				v => ({
-					type: 'player-location',
-					player: v.charId,
-					x: v.x, y: v.y
-				})
-			)
-			player.ws.send(JSON.stringify(resp))
-			break;
+        // case 'get-all-player-locations':
+		// 	var player = players.find(p => p.charId == msg.player)
+		// 	resp = { type: 'all-player-locations' }
+		// 	resp.players = players.map(
+		// 		v => ({
+		// 			type: 'player-location',
+		// 			player: v.charId,
+		// 			x: v.x, y: v.y
+		// 		})
+		// 	)
+		// 	player.ws.send(JSON.stringify(resp))
+		// 	break;
 
-		case 'request-movement':		
-			// const origX = player.data.x
-            // const origY = player.data.y
-            // console.info(player.data)
-            // switch (msg.key.toLowerCase()) {
-			// 	case 'arrowup':
-			// 		break;
+		// case 'request-movement':		
+		// 	// const origX = player.data.x
+        //     // const origY = player.data.y
+        //     // console.info(player.data)
+        //     // switch (msg.key.toLowerCase()) {
+		// 	// 	case 'arrowup':
+		// 	// 		break;
 
-			// 	case 'arrowdown':
-			// 		finalY = (finalY + 1) % 10
-			// 		break;
+		// 	// 	case 'arrowdown':
+		// 	// 		finalY = (finalY + 1) % 10
+		// 	// 		break;
 
-			// 	case 'arrowleft':
-			// 		finalX = (finalX - 1) < 0? 9: (finalX - 1)
-			// 		break;
+		// 	// 	case 'arrowleft':
+		// 	// 		finalX = (finalX - 1) < 0? 9: (finalX - 1)
+		// 	// 		break;
 
-			// 	case 'arrowright':
-			// 		finalX = (finalX + 1) % 10
-			// 		break;
+		// 	// 	case 'arrowright':
+		// 	// 		finalX = (finalX + 1) % 10
+		// 	// 		break;
 				
-			// 	default:
-			// 		return
-			// }
-			// let finalX = msg.direction.x
-			// let finalY = msg.direction.y
+		// 	// 	default:
+		// 	// 		return
+		// 	// }
+		// 	// let finalX = msg.direction.x
+		// 	// let finalY = msg.direction.y
 			
-            // player.data.x = msg.direction.x
-            // player.data.y = msg.direction.y
+        //     // player.data.x = msg.direction.x
+        //     // player.data.y = msg.direction.y
 
-			resp = JSON.stringify({
-				type: 'player-moved',
-                player: msg.player,
-				key: msg.key
-			})
-			for (let i in players)
-				players[i].send(resp)
+		// 	resp = JSON.stringify({
+		// 		type: 'player-moved',
+        //         player: msg.player,
+		// 		key: msg.key
+		// 	})
+		// 	for (let i in players)
+		// 		players[i].send(resp)
 
-			break;
+		// 	break;
 
-		default:
+		// default:
 			// ignore message type that we don't understand
 	}
 }
